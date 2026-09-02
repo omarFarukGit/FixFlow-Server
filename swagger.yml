@@ -1,0 +1,92 @@
+openapi: 3.0.3
+info:
+  title: FixFlow API
+  description: Field Service Management System API
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Local development server
+tags:
+  - name: Auth
+    description: Authentication APIs
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register a new user
+      description: Create a new customer account.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  example: Muhammad Omar Faruk
+                email:
+                  type: string
+                  format: email
+                  example: omar@example.com
+                password:
+                  type: string
+                  format: password
+                  example: Password123!
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: User registered successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: 550e8400-e29b-41d4-a716-446655440000
+                      name:
+                        type: string
+                        example: Muhammad Omar Faruk
+                      email:
+                        type: string
+                        example: omar@example.com
+                      role:
+                        type: string
+                        example: CUSTOMER
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Validation failed
+                  errors:
+                    type: array
+                    items:
+                      type: object
+        '409':
+          description: Email already exists
+        '500':
+          description: Internal server error
+components: {}
