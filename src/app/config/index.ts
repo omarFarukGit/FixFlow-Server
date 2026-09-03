@@ -15,4 +15,8 @@ export default {
   jwt_access_expires_in: process.env.JWT_ACCESS_EXPIRES_IN as string,
   jwt_refresh_expires_in: process.env.JWT_REFRESH_EXPIRES_IN as string,
   google_client_id: process.env.GOOGLE_CLIENT_ID as string,
+  redis_user: process.env.REDIS_USER as string,
+  redis_password: process.env.REDIS_PASSWORD as string,
+  redis_host: process.env.REDIS_HOST as string,
+  redis_port: process.env.REDIS_PORT as string,
 };
