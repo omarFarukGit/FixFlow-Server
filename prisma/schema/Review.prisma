@@ -1,0 +1,25 @@
+model Review {
+  id String @id @default(uuid())
+
+  rating Int
+
+  comment String?
+
+  serviceRequestId String @unique
+
+  reviewerId String
+
+  technicianId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  serviceRequest ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+
+  reviewer User @relation("ReviewsGiven", fields: [reviewerId], references: [id], onDelete: Cascade)
+
+  technician User @relation("ReviewsReceived", fields: [technicianId], references: [id], onDelete: Cascade)
+
+  @@index([technicianId])
+  @@index([rating])
+}
