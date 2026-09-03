@@ -4,13 +4,18 @@ import bcrypt from "bcryptjs";
 import ejs from "ejs";
 import httpStatus from "http-status";
 import type { SignOptions } from "jsonwebtoken";
+import { UserStatus } from "../../../generated/prisma/enums";
 import config from "../../config";
 import transporter from "../../lib/nodemailer";
 import { prisma } from "../../lib/prisma";
 import redisClient from "../../lib/redis";
 import { AppError } from "../../utils/AppError";
 import { jwtUtils } from "../../utils/jwt";
-import type { IRegisterPayload, IVerifyEmailPayload } from "./auth.interface";
+import type {
+  ILoginPayload,
+  IRegisterPayload,
+  IVerifyEmailPayload,
+} from "./auth.interface";
 
 const register = async (payload: IRegisterPayload) => {
   const { name, email, password, role } = payload;
@@ -183,7 +188,71 @@ const verifyUserEmail = async (payload: IVerifyEmailPayload) => {
   };
 };
 
+const login = async (payload: ILoginPayload) => {
+  // throw new Error("Test Error");
+
+  const { password } = payload;
+  const email = payload.email.trim().toLowerCase();
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    // throw new Error("User not found");
+    throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
+  }
+
+  if (user.status === UserStatus.SUSPENDED) {
+    throw new AppError(httpStatus.FORBIDDEN, "User is suspended");
+  }
+
+  if (user.isDeleted === true) {
+    throw new AppError(httpStatus.FORBIDDEN, "User is deleted");
+  }
+
+  if (user.password === null && user.googleId !== null) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "User Already Has Account Registered With Google. Try To Login With Google.",
+    );
+  }
+
+  const isPasswordMatched = await bcrypt.compare(
+    password,
+    user.password as string,
+  );
+
+  if (!isPasswordMatched) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credentials");
+  }
+
+  const jwtPayload = {
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+
+  const accessToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_access_secret,
+    config.jwt_access_expires_in as SignOptions,
+  );
+
+  const refreshToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_refresh_secret,
+    config.jwt_refresh_expires_in as SignOptions,
+  );
+
+  return {
+    accessToken,
+    refreshToken,
+  };
+};
 export const authServices = {
   register,
   verifyUserEmail,
+  login,
 };

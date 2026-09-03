@@ -16,4 +16,10 @@ router.post(
   authController.verifyEmail,
 );
 
+router.post(
+  "/login",
+  validateRequest(UserValidation.UserLoginZodSchema),
+  authController.login,
+);
+
 export const authRoutes = router;
