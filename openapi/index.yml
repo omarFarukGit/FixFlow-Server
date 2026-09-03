@@ -21,7 +21,9 @@ paths:
 
       summary: Register a new user
 
-      description: Create a new customer account.
+      description: >
+        Creates a new Customer or Technician account and sends an email
+        verification OTP to the user's email address.
 
       operationId: registerUser
 
@@ -37,6 +39,7 @@ paths:
                 - name
                 - email
                 - password
+                - role
 
               properties:
                 name:
@@ -53,9 +56,16 @@ paths:
                   format: password
                   example: Password123!
 
+                role:
+                  type: string
+                  enum:
+                    - CUSTOMER
+                    - TECHNICIAN
+                  example: CUSTOMER
+
       responses:
         "201":
-          description: User registered successfully
+          description: User registered successfully and verification OTP sent
 
           content:
             application/json:
@@ -67,31 +77,65 @@ paths:
                     type: boolean
                     example: true
 
+                  statusCode:
+                    type: integer
+                    example: 201
+
                   message:
                     type: string
-                    example: User registered successfully
+                    example: Verification OTP sent to your email
 
                   data:
                     type: object
-                    properties:
-                      id:
-                        type: string
-                        example: "550e8400-e29b-41d4-a716-446655440000"
-
-                      name:
-                        type: string
-                        example: Muhammad Omar Faruk
-
-                      email:
-                        type: string
-                        example: omar@example.com
-
-                      role:
-                        type: string
-                        example: CUSTOMER
+                    example: {}
 
         "400":
           description: Validation error
+
+        "409":
+          description: Email already exists
+
+        "500":
+          description: Internal server error
+
+
+  /auth/verify-email:
+    post:
+      tags:
+        - Auth
+
+      summary: Verify user email
+
+      description: >
+        Verifies the user's email address using the OTP sent during registration.
+
+      operationId: verifyEmail
+
+      requestBody:
+        required: true
+
+        content:
+          application/json:
+            schema:
+              type: object
+
+              required:
+                - email
+                - otp
+
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: omar@example.com
+
+                otp:
+                  type: string
+                  example: "123456"
+
+      responses:
+        "200":
+          description: Email verified successfully
 
           content:
             application/json:
@@ -101,19 +145,25 @@ paths:
                 properties:
                   success:
                     type: boolean
-                    example: false
+                    example: true
+
+                  statusCode:
+                    type: integer
+                    example: 200
 
                   message:
                     type: string
-                    example: Validation failed
+                    example: Email verified successfully
 
-                  errors:
-                    type: array
-                    items:
-                      type: object
+                  data:
+                    type: object
+                    example: {}
 
-        "409":
-          description: Email already exists
+        "400":
+          description: Invalid or expired OTP
+
+        "404":
+          description: User not found
 
         "500":
           description: Internal server error
