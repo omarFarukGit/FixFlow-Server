@@ -98,7 +98,6 @@ paths:
         "500":
           description: Internal server error
 
-
   /auth/verify-email:
     post:
       tags:
@@ -250,4 +249,67 @@ paths:
           description: User not found
 
         "500":
-          description: Internal server error          
+          description: Internal server error   
+  /auth/refresh-token:
+    post:
+      tags:
+        - Auth
+
+      summary: Refresh access token
+
+      description: >
+        Generates a new access token and refresh token using a valid refresh
+        token provided through the Authorization Bearer header.
+
+      operationId: refreshAccessToken
+
+      security:
+        - refreshTokenAuth: []
+
+      responses:
+        "200":
+          description: Refresh token successful
+
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+                  statusCode:
+                    type: integer
+                    example: 200
+
+                  message:
+                    type: string
+                    example: Refresh token successful
+
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+                      refreshToken:
+                        type: string
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+        "401":
+          description: Invalid or expired refresh token
+
+        "404":
+          description: User not found
+
+        "500":
+          description: Internal server error
+components:
+  securitySchemes:
+
+    refreshTokenAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT                    

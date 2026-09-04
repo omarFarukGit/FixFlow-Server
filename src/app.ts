@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import type { Application, Request, Response } from "express";
 import express from "express";
@@ -17,6 +18,7 @@ const swaggerDocument = YAML.parse(file);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(cors());
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 

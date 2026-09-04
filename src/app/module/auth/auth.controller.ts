@@ -66,8 +66,41 @@ const login = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const refreshToken = catchAsync(async (req: Request, res: Response) => {
+  const token = req.cookies.refreshToken
+    ? req.cookies.refreshToken
+    : req.headers.authorization?.startsWith("Bearer ")
+      ? req.headers.authorization?.split(" ")[1]
+      : req.headers.authorization;
+  const { accessToken, refreshToken } = await authServices.refreshToken(
+    token as string,
+  );
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "none",
+    maxAge: 1000 * 60 * 60 * 24, // 24 hour or 1 day
+  });
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "none",
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+  });
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Refresh token successful",
+    data: {
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    },
+  });
+});
+
 export const authController = {
   register,
   verifyEmail,
   login,
+  refreshToken,
 };
