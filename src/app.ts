@@ -9,6 +9,7 @@ import YAML from "yaml";
 import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { notFound } from "./app/middleware/notFound";
 import { authRoutes } from "./app/module/auth/auth.route";
+import { userRoute } from "./app/module/user/user.route";
 
 const app: Application = express();
 
@@ -26,6 +27,7 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Hello fixflow-server!");
 });
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/users", userRoute);
 app.use(globalErrorHandler);
 app.use(notFound);
 export default app;

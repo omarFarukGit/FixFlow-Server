@@ -9,6 +9,8 @@ servers:
 tags:
   - name: Auth
     description: Authentication APIs
+  - name: User
+    description: User management APIs
 paths:
   /auth/register:
     post:
@@ -432,8 +434,65 @@ paths:
           description: Google login is only available for customers
         '500':
           description: Internal server error
+  /users/me:
+    get:
+      tags:
+        - User
+      summary: Get current user profile
+      description: |
+        Returns the profile information of the currently authenticated user. If the user is a technician, the technician profile is also included.
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: User retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                      email:
+                        type: string
+                        format: email
+                      role:
+                        type: string
+                        enum:
+                          - CUSTOMER
+                          - TECHNICIAN
+                          - ADMIN
+                      technicianProfile:
+                        type: object
+                        nullable: true
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
 components:
   securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
     refreshTokenAuth:
       type: http
       scheme: bearer
