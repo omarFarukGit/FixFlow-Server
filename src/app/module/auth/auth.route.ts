@@ -34,4 +34,8 @@ router.post(
   validateRequest(UserValidation.UserResetPasswordZodSchema),
   authController.resetPassword,
 );
+
+router.get("/google", authController.googleLogin);
+
+router.get("/google/callback", authController.googleCallback);
 export const authRoutes = router;

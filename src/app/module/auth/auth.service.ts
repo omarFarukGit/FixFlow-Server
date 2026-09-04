@@ -6,6 +6,7 @@ import httpStatus from "http-status";
 import type { JwtPayload, SignOptions } from "jsonwebtoken";
 import { UserStatus } from "../../../generated/prisma/enums";
 import config from "../../config";
+import { googleClient } from "../../lib/google";
 import transporter from "../../lib/nodemailer";
 import { prisma } from "../../lib/prisma";
 import redisClient from "../../lib/redis";
@@ -445,6 +446,95 @@ const resetPassword = async (payload: IResetPasswordPayload) => {
   });
 };
 
+const googleLogin = () => {
+  const url = googleClient.generateAuthUrl({
+    access_type: "offline",
+    scope: ["openid", "email", "profile"],
+    prompt: "select_account",
+  });
+
+  return url;
+};
+
+const googleCallback = async (code: string) => {
+  // 1. Google authorization code exchange
+  const { tokens } = await googleClient.getToken(code);
+
+  if (!tokens.id_token) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Google authentication failed");
+  }
+
+  // 2. Verify ID Token
+  const ticket = await googleClient.verifyIdToken({
+    idToken: tokens.id_token,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+
+  const payload = ticket.getPayload();
+
+  if (!payload) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Invalid Google token");
+  }
+
+  const googleId = payload.sub;
+  const email = payload.email;
+  const name = payload.name;
+  const picture = payload.picture;
+
+  if (!email) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Google account does not have an email",
+    );
+  }
+
+  // 3. Find user
+  let user = await prisma.user.findFirst({
+    where: {
+      OR: [{ googleId }, { email }],
+    },
+  });
+
+  // 4. User exists
+  if (user) {
+    if (user.role !== "CUSTOMER") {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        "Google login is only available for customers",
+      );
+    }
+
+    // Optional: existing credential customer
+    // can link Google account here
+    if (!user.googleId) {
+      user = await prisma.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          googleId,
+          authProvider: "GOOGLE",
+          emailVerified: true,
+        },
+      });
+    }
+  } else {
+    // 5. Create CUSTOMER only
+    user = await prisma.user.create({
+      data: {
+        name: name ?? "Google User",
+        email,
+        googleId,
+        imageUrl: picture ?? "",
+        authProvider: "GOOGLE",
+        emailVerified: true,
+        role: "CUSTOMER",
+      },
+    });
+  }
+
+  return user;
+};
 export const authServices = {
   register,
   verifyUserEmail,
@@ -452,4 +542,6 @@ export const authServices = {
   refreshToken,
   forgotPassword,
   resetPassword,
+  googleLogin,
+  googleCallback,
 };

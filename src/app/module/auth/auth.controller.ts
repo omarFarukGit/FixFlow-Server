@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import httpStatus from "http-status";
+import { AppError } from "../../utils/AppError";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { authServices } from "./auth.service";
@@ -117,6 +118,33 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+const googleLogin = catchAsync(async (_req: Request, res: Response) => {
+  const url = authServices.googleLogin();
+
+  res.redirect(url);
+});
+
+const googleCallback = catchAsync(async (req: Request, res: Response) => {
+  const code = req.query.code;
+
+  if (typeof code !== "string") {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Google authorization code is required",
+    );
+  }
+
+  const user = await authServices.googleCallback(code);
+
+  const { password, imagePublicId, isDeleted, deletedAt, ...safeUser } = user;
+
+  res.status(httpStatus.OK).json({
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Google login successful",
+    data: safeUser,
+  });
+});
 
 export const authController = {
   register,
@@ -125,4 +153,6 @@ export const authController = {
   refreshToken,
   forgotPassword,
   resetPassword,
+  googleLogin,
+  googleCallback,
 };

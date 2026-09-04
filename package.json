@@ -24,8 +24,8 @@
   "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "@biomejs/biome": "2.5.11",
-    "@redocly/cli": "^2.49.1",
+    "@biomejs/biome": "^2.5.12",
+    "@redocly/cli": "^2.51.1",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/ejs": "^3.1.5",
@@ -50,6 +50,7 @@
     "dotenv": "^17.4.2",
     "ejs": "^6.0.1",
     "express": "^5.2.1",
+    "google-auth-library": "^11.0.2",
     "http-status": "^2.1.0",
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^9.1.1",
@@ -69,5 +70,10 @@
     "@prisma/config": {
       "deepmerge-ts": "8.0.0"
     }
+  },
+  "allowScripts": {
+    "@prisma/engines@7.10.0": true,
+    "prisma@7.10.0": true,
+    "esbuild@0.28.2": true
   }
 }

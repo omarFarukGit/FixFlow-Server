@@ -435,12 +435,143 @@ paths:
         "500":
           description: Internal server error
 
-        
+  /auth/google:
+    get:
+      tags:
+        - Auth
+
+      summary: Login with Google
+
+      description: |
+        Initiates Google OAuth login for customers.
+
+        This endpoint redirects the user to Google's OAuth consent screen.
+
+        Important: This endpoint uses a browser redirect flow and cannot be
+        reliably tested using Swagger UI's "Try it out" feature.
+
+        To test Google login, open this URL directly in a browser:
+
+        http://localhost:5000/api/v1/auth/google
+
+        After successful authentication, Google automatically redirects the
+        user to the callback endpoint.
+
+      operationId: googleLogin
+
+      responses:
+        "302":
+          description: Redirect to Google OAuth login page
+
+        "500":
+          description: Internal server error
+
+  /auth/google/callback:
+    get:
+      tags:
+        - Auth
+
+      summary: Google OAuth callback
+
+      description: |
+        Handles the callback from Google after successful authentication.
+
+        Google automatically calls this endpoint with an authorization code.
+
+        Important: Do not manually test this endpoint with a custom code.
+        Start the OAuth flow from /auth/google instead.
+
+      operationId: googleCallback
+
+      parameters:
+        - name: code
+          in: query
+          required: false
+          description: Authorization code automatically provided by Google
+          schema:
+            type: string
+
+      responses:
+        "200":
+          description: Google login successful
+
+          content:
+            application/json:
+              schema:
+                type: object
+
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+                  statusCode:
+                    type: integer
+                    example: 200
+
+                  message:
+                    type: string
+                    example: Google login successful
+
+                  data:
+                    type: object
+
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: "4d3811e4-aeaf-40ac-8963-82edfefe19fc"
+
+                      name:
+                        type: string
+                        example: Muhammad Omar Faruk
+
+                      email:
+                        type: string
+                        format: email
+                        example: omar@example.com
+
+                      googleId:
+                        type: string
+                        example: "101458028521893356774"
+
+                      authProvider:
+                        type: string
+                        enum:
+                          - GOOGLE
+                        example: GOOGLE
+
+                      emailVerified:
+                        type: boolean
+                        example: true
+
+                      role:
+                        type: string
+                        enum:
+                          - CUSTOMER
+                        example: CUSTOMER
+
+                      imageUrl:
+                        type: string
+                        format: uri
+
+        "400":
+          description: Google authorization code is required
+
+        "401":
+          description: Google authentication failed
+
+        "403":
+          description: Google login is only available for customers
+
+        "500":
+          description: Internal server error
+
 components:
   securitySchemes:
-
     refreshTokenAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT     
+      bearerFormat: JWT
+     
                      
