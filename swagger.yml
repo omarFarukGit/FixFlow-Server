@@ -487,6 +487,102 @@ paths:
           description: User not found
         '500':
           description: Internal server error
+  users/me:
+    patch:
+      tags:
+        - User
+      summary: Update current user profile
+      description: |
+        Updates the profile information of the currently authenticated user. Users can update their name, phone, address, city, and area.
+      operationId: updateCurrentUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                  example: Muhammad Omar Faruk
+                phone:
+                  type: string
+                  minLength: 10
+                  maxLength: 20
+                  example: '01700000000'
+                address:
+                  type: string
+                  maxLength: 255
+                  example: Mirpur, Dhaka, Bangladesh
+                city:
+                  type: string
+                  maxLength: 100
+                  example: Dhaka
+                area:
+                  type: string
+                  maxLength: 100
+                  example: Mirpur
+      responses:
+        '200':
+          description: User profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: User profile updated successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                      email:
+                        type: string
+                        format: email
+                      phone:
+                        type: string
+                        nullable: true
+                      address:
+                        type: string
+                        nullable: true
+                      city:
+                        type: string
+                        nullable: true
+                      area:
+                        type: string
+                        nullable: true
+                      role:
+                        type: string
+                        enum:
+                          - CUSTOMER
+                          - TECHNICIAN
+                          - ADMIN
+                      updatedAt:
+                        type: string
+                        format: date-time
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized - Access token is missing or invalid
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
 components:
   securitySchemes:
     bearerAuth:

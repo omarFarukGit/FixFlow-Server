@@ -15,6 +15,22 @@ const me = catchAsync(async (req, res) => {
   });
 });
 
+const updateMe = catchAsync(async (req, res) => {
+  const userId = req?.user?.userId as string;
+
+  const result = await userService.updateMe(userId, req.body);
+
+  console.log(result);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User information updated successfully",
+    data: result,
+  });
+});
+
 export const userController = {
   me,
+  updateMe,
 };
