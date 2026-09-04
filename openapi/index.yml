@@ -306,10 +306,141 @@ paths:
 
         "500":
           description: Internal server error
+
+  /auth/forgot-password:
+    post:
+      tags:
+        - Auth
+
+      summary: Forgot password
+
+      description: >
+        Sends a password reset OTP to the user's registered email address.
+
+      operationId: forgotPassword
+
+      requestBody:
+        required: true
+
+        content:
+          application/json:
+            schema:
+              type: object
+
+              required:
+                - email
+
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: muhammadabuhafz@gmail.com
+
+      responses:
+        "200":
+          description: Password reset OTP sent successfully
+
+          content:
+            application/json:
+              schema:
+                type: object
+
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+                  statusCode:
+                    type: integer
+                    example: 200
+
+                  message:
+                    type: string
+                    example: Password reset otp sent to your email
+
+        "400":
+          description: Invalid email address
+
+        "404":
+          description: User not found
+
+        "500":
+          description: Internal server error
+
+  /auth/reset-password:
+    post:
+      tags:
+        - Auth
+      summary: Reset password
+      description: >
+        Resets the user's password using a valid password reset OTP.
+      operationId: resetPassword
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - otp
+                - newPassword
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: muhammadabuhafz@gmail.com
+
+                otp:
+                  type: string
+                  description: Password reset OTP
+                  example: "126066"
+
+                newPassword:
+                  type: string
+                  format: password
+                  description: New password
+                  example: "588888Aaj*"
+
+      responses:
+        "200":
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+                  statusCode:
+                    type: integer
+                    example: 200
+
+                  message:
+                    type: string
+                    example: Password reset successful
+
+        "400":
+          description: Invalid request or validation error
+
+        "401":
+          description: Invalid or expired OTP
+
+        "404":
+          description: User not found
+
+        "500":
+          description: Internal server error
+
+        
 components:
   securitySchemes:
 
     refreshTokenAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT                    
+      bearerFormat: JWT     
+                     
