@@ -30,7 +30,24 @@ const updateMe = catchAsync(async (req, res) => {
   });
 });
 
+const updateProfileImage = catchAsync(async (req, res) => {
+  const userId = req?.user?.userId as string;
+
+  const result = await userService.updateProfileImage(
+    userId,
+    req.file?.buffer as Buffer,
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User profile image updated successfully",
+    data: result,
+  });
+});
+
 export const userController = {
   me,
   updateMe,
+  updateProfileImage,
 };

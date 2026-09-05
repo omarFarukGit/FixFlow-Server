@@ -767,6 +767,91 @@ paths:
 
         "500":
           description: Internal server error
+  
+  /users/me/image:
+    patch:
+      tags:
+        - User
+
+      summary: Update profile image
+
+      description: >
+        Uploads and updates the profile image of the currently authenticated user.
+        The image should be sent as multipart/form-data.
+
+      operationId: updateProfileImage
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Profile image file
+
+      responses:
+        "200":
+          description: Profile image updated successfully
+
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+                  statusCode:
+                    type: integer
+                    example: 200
+
+                  message:
+                    type: string
+                    example: Profile image updated successfully
+
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: "4d3811e4-aeaf-40ac-8963-82edfefe19fc"
+
+                      name:
+                        type: string
+                        example: Muhammad Omar Faruk
+
+                      email:
+                        type: string
+                        format: email
+                        example: omar@example.com
+
+                      imageUrl:
+                        type: string
+                        format: uri
+                        example: "https://res.cloudinary.com/example/image/upload/profile.jpg"
+
+        "400":
+          description: Invalid image or validation error
+
+        "401":
+          description: Unauthorized - Access token is missing or invalid
+
+        "404":
+          description: User not found
+
+        "500":
+          description: Internal server error
 
 components:
   securitySchemes:

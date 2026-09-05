@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { Role } from "../../../generated/prisma/enums";
+import { upload } from "../../lib/multer";
 import { auth } from "../../middleware/checkAuth";
 import { validateRequest } from "../../middleware/validateRequest";
 import { userController } from "./user.controller";
@@ -18,4 +19,12 @@ router.patch(
   auth(Role.ADMIN, Role.TECHNICIAN, Role.CUSTOMER),
   userController.updateMe,
 );
+
+router.patch(
+  "/me/image",
+  upload.single("image"),
+  auth(Role.ADMIN, Role.TECHNICIAN, Role.CUSTOMER),
+  userController.updateProfileImage,
+);
+
 export const userRoute = router;
