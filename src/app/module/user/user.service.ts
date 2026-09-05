@@ -1,6 +1,5 @@
 import type { UploadApiResponse } from "cloudinary";
 import httpStatus from "http-status";
-import { resolve } from "path/win32";
 import { cloudinary } from "../../lib/cloudinary";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";

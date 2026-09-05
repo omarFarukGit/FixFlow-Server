@@ -649,6 +649,124 @@ paths:
           description: User not found
         '500':
           description: Internal server error
+  /technicians/me/profile:
+    patch:
+      tags:
+        - Technician
+      summary: Update technician profile
+      description: |
+        Allows the authenticated technician to create or update their professional profile information.
+      operationId: updateTechnicianProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bio:
+                  type: string
+                  maxLength: 1000
+                  example: Professional AC and electrical technician
+                experienceYears:
+                  type: integer
+                  minimum: 0
+                  maximum: 50
+                  example: 5
+                skills:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - AC Repair
+                    - Electrical Wiring
+                    - AC Installation
+                hourlyRate:
+                  type: number
+                  format: double
+                  minimum: 0
+                  example: 500
+      responses:
+        '200':
+          description: Technician profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Technician profile updated successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+                      userId:
+                        type: string
+                        format: uuid
+                        example: 7b7c1d7e-8b12-4a9a-9f4e-123456789abc
+                      bio:
+                        type: string
+                        example: Professional AC and electrical technician
+                      experienceYears:
+                        type: integer
+                        example: 5
+                      skills:
+                        type: array
+                        items:
+                          type: string
+                        example:
+                          - AC Repair
+                          - Electrical Wiring
+                          - AC Installation
+                      hourlyRate:
+                        type: number
+                        format: double
+                        example: 500
+                      status:
+                        type: string
+                        enum:
+                          - AVAILABLE
+                          - BUSY
+                          - OFFLINE
+                        example: OFFLINE
+                      averageRating:
+                        type: number
+                        format: float
+                        example: 0
+                      totalJobs:
+                        type: integer
+                        example: 0
+                      isApproved:
+                        type: boolean
+                        example: false
+                      createdAt:
+                        type: string
+                        format: date-time
+                      updatedAt:
+                        type: string
+                        format: date-time
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized - Access token is missing or invalid
+        '403':
+          description: Forbidden - Only technicians can update technician profile
+        '404':
+          description: Technician profile or user not found
+        '500':
+          description: Internal server error
 components:
   securitySchemes:
     bearerAuth:
