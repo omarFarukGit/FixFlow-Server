@@ -185,3 +185,82 @@ export const seedTesterTechnician = async () => {
     }
   }
 };
+
+export const seedCategories = async () => {
+  try {
+    const categories = [
+      {
+        name: "AC Repair",
+        description:
+          "Air conditioner repair, maintenance, and installation services.",
+      },
+      {
+        name: "Electrical",
+        description:
+          "Home electrical wiring, repair, installation, and maintenance services.",
+      },
+      {
+        name: "Plumbing",
+        description:
+          "Plumbing repair, pipe installation, leakage fixing, and maintenance services.",
+      },
+      {
+        name: "Appliance Repair",
+        description:
+          "Repair and maintenance services for household electrical appliances.",
+      },
+      {
+        name: "Refrigerator Repair",
+        description:
+          "Professional refrigerator troubleshooting, repair, and maintenance services.",
+      },
+      {
+        name: "Washing Machine Repair",
+        description:
+          "Washing machine repair, installation, and maintenance services.",
+      },
+      {
+        name: "TV Repair",
+        description:
+          "Television troubleshooting, repair, and maintenance services.",
+      },
+      {
+        name: "Computer & Laptop Repair",
+        description:
+          "Computer and laptop hardware, software, and troubleshooting services.",
+      },
+      {
+        name: "Painting",
+        description:
+          "Interior and exterior home painting and wall finishing services.",
+      },
+      {
+        name: "Carpentry",
+        description:
+          "Furniture repair, woodwork, installation, and carpentry services.",
+      },
+    ];
+
+    for (const category of categories) {
+      await prisma.serviceCategory.upsert({
+        where: {
+          name: category.name,
+        },
+        update: {
+          description: category.description,
+          isActive: true,
+          isDeleted: false,
+          deletedAt: null,
+        },
+        create: {
+          name: category.name,
+          description: category.description,
+        },
+      });
+    }
+
+    console.log("Service categories seeded successfully!");
+  } catch (error) {
+    console.log("Error seeding service categories:", error);
+  }
+};

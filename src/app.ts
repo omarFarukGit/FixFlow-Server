@@ -9,6 +9,7 @@ import YAML from "yaml";
 import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { notFound } from "./app/middleware/notFound";
 import { authRoutes } from "./app/module/auth/auth.route";
+import { categoryRoutes } from "./app/module/category/category.route";
 import { technicianRoute } from "./app/module/technician/technician.route";
 import { userRoute } from "./app/module/user/user.route";
 
@@ -30,6 +31,7 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoute);
 app.use("/api/v1/technicians", technicianRoute);
+app.use("/api/v1/categories", categoryRoutes);
 app.use(globalErrorHandler);
 app.use(notFound);
 export default app;

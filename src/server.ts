@@ -2,6 +2,7 @@ import app from "./app";
 import { prisma } from "./app/lib/prisma";
 import redisClient from "./app/lib/redis";
 import {
+  seedCategories,
   seedTesterAdmin,
   seedTesterCustomer,
   seedTesterTechnician,
@@ -16,6 +17,7 @@ const main = async () => {
   await seedTesterCustomer();
   await seedTesterAdmin();
   await seedTesterTechnician();
+  await seedCategories();
 
   console.log("Seeding completed successfully!");
   app.listen(port, () => {

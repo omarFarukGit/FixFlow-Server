@@ -11,6 +11,10 @@ tags:
     description: Authentication APIs
   - name: User
     description: User management APIs
+  - name: Technician
+    description: Technician management APIs
+  - name: Category
+    description: Service category management APIs
 paths:
   /auth/register:
     post:
@@ -487,7 +491,6 @@ paths:
           description: User not found
         '500':
           description: Internal server error
-  users/me:
     patch:
       tags:
         - User
@@ -765,6 +768,418 @@ paths:
           description: Forbidden - Only technicians can update technician profile
         '404':
           description: Technician profile or user not found
+        '500':
+          description: Internal server error
+  /categories:
+    post:
+      tags:
+        - Category
+      summary: Create a service category
+      description: |
+        Creates a new service category. Only authenticated administrators can create service categories.
+      operationId: createCategory
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                  example: AC Repair
+                description:
+                  type: string
+                  maxLength: 500
+                  example: Air conditioner repair, maintenance, and installation services.
+      responses:
+        '201':
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 201
+                  message:
+                    type: string
+                    example: Category created successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+                      name:
+                        type: string
+                        example: AC Repair
+                      description:
+                        type: string
+                        example: Air conditioner repair, maintenance, and installation services.
+                      imageUrl:
+                        type: string
+                        example: ''
+                      isActive:
+                        type: boolean
+                        example: true
+                      isDeleted:
+                        type: boolean
+                        example: false
+                      deletedAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: null
+                      createdAt:
+                        type: string
+                        format: date-time
+                      updatedAt:
+                        type: string
+                        format: date-time
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized - Access token is missing or invalid
+        '403':
+          description: Forbidden - Only administrators can create categories
+        '409':
+          description: Category already exists
+        '500':
+          description: Internal server error
+    get:
+      tags:
+        - Category
+      summary: Get all service categories
+      description: |
+        Retrieves all active and non-deleted service categories. This endpoint is publicly accessible.
+      operationId: getAllCategories
+      responses:
+        '200':
+          description: Categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Categories retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                          example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+                        name:
+                          type: string
+                          example: AC Repair
+                        description:
+                          type: string
+                          nullable: true
+                          example: Air conditioner repair, maintenance, and installation services.
+                        imageUrl:
+                          type: string
+                          example: ''
+                        isActive:
+                          type: boolean
+                          example: true
+                        isDeleted:
+                          type: boolean
+                          example: false
+                        deletedAt:
+                          type: string
+                          format: date-time
+                          nullable: true
+                          example: null
+                        createdAt:
+                          type: string
+                          format: date-time
+                          example: '2026-09-05T10:00:00.000Z'
+                        updatedAt:
+                          type: string
+                          format: date-time
+                          example: '2026-09-05T10:00:00.000Z'
+        '500':
+          description: Internal server error
+  /categories/{id}:
+    get:
+      tags:
+        - Category
+      summary: Get category by ID
+      description: |
+        Retrieves a single active and non-deleted service category using its unique ID. This endpoint is publicly accessible.
+      operationId: getCategoryById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the service category
+          schema:
+            type: string
+            format: uuid
+          example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+      responses:
+        '200':
+          description: Category retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Category retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+                      name:
+                        type: string
+                        example: AC Repair
+                      description:
+                        type: string
+                        nullable: true
+                        example: Air conditioner repair, maintenance, and installation services.
+                      imageUrl:
+                        type: string
+                        example: ''
+                      isActive:
+                        type: boolean
+                        example: true
+                      isDeleted:
+                        type: boolean
+                        example: false
+                      deletedAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: null
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: '2026-09-05T10:00:00.000Z'
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: '2026-09-05T10:00:00.000Z'
+        '400':
+          description: Invalid category ID
+        '404':
+          description: Category not found
+        '500':
+          description: Internal server error
+    patch:
+      tags:
+        - Category
+      summary: Update a service category
+      description: |
+        Updates an existing service category. Only authenticated administrators can update a category. The category must not be deleted.
+      operationId: updateCategory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the service category
+          schema:
+            type: string
+            format: uuid
+          example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                  example: AC & Cooling Repair
+                description:
+                  type: string
+                  maxLength: 500
+                  example: AC repair, servicing and installation services.
+                imageUrl:
+                  type: string
+                  format: uri
+                  example: https://example.com/ac.jpg
+                isActive:
+                  type: boolean
+                  example: true
+      responses:
+        '200':
+          description: Category updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Category updated successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+                      name:
+                        type: string
+                        example: AC & Cooling Repair
+                      description:
+                        type: string
+                        nullable: true
+                        example: AC repair, servicing and installation services.
+                      imageUrl:
+                        type: string
+                        example: https://example.com/ac.jpg
+                      isActive:
+                        type: boolean
+                        example: true
+                      isDeleted:
+                        type: boolean
+                        example: false
+                      deletedAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: null
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: '2026-09-05T10:00:00.000Z'
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: '2026-09-06T08:00:00.000Z'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized - Access token is missing or invalid
+        '403':
+          description: Forbidden - Only administrators can update categories
+        '404':
+          description: Category not found
+        '409':
+          description: Category with the same name already exists
+        '500':
+          description: Internal server error
+    delete:
+      tags:
+        - Category
+      summary: Delete a service category
+      description: |
+        Soft deletes an existing service category. The category is not permanently removed from the database. Only authenticated administrators can delete a category.
+      operationId: deleteCategory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the service category
+          schema:
+            type: string
+            format: uuid
+          example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+      responses:
+        '200':
+          description: Category deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Category deleted successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+                      name:
+                        type: string
+                        example: AC Repair
+                      description:
+                        type: string
+                        nullable: true
+                        example: Air conditioner repair, maintenance, and installation services.
+                      imageUrl:
+                        type: string
+                        example: ''
+                      isActive:
+                        type: boolean
+                        example: false
+                      isDeleted:
+                        type: boolean
+                        example: true
+                      deletedAt:
+                        type: string
+                        format: date-time
+                        example: '2026-09-06T08:00:00.000Z'
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: '2026-09-05T10:00:00.000Z'
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: '2026-09-06T08:00:00.000Z'
+        '401':
+          description: Unauthorized - Access token is missing or invalid
+        '403':
+          description: Forbidden - Only administrators can delete categories
+        '404':
+          description: Category not found
         '500':
           description: Internal server error
 components:
