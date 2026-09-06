@@ -10,6 +10,8 @@ import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { notFound } from "./app/middleware/notFound";
 import { authRoutes } from "./app/module/auth/auth.route";
 import { categoryRoutes } from "./app/module/category/category.route";
+import { PaymentController } from "./app/module/payment/payment.controller";
+import { PaymentRoutes } from "./app/module/payment/payment.route";
 import { ServiceRequestRoutes } from "./app/module/service-request/service-request.route";
 import { technicianRoute } from "./app/module/technician/technician.route";
 import { userRoute } from "./app/module/user/user.route";
@@ -19,6 +21,12 @@ const app: Application = express();
 const swaggerPath = path.join(process.cwd(), "swagger.yml");
 const file = fs.readFileSync(swaggerPath, "utf-8");
 const swaggerDocument = YAML.parse(file);
+
+app.post(
+  "/api/v1/payments/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  PaymentController.handleStripeWebhook,
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -34,6 +42,7 @@ app.use("/api/v1/users", userRoute);
 app.use("/api/v1/technicians", technicianRoute);
 app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/service-requests", ServiceRequestRoutes);
+app.use("/api/v1/payments", PaymentRoutes);
 app.use(globalErrorHandler);
 app.use(notFound);
 export default app;

@@ -41,4 +41,7 @@ export default {
   tester_technician_name: process.env.TESTER_TECHNICIAN_NAME as string,
   tester_technician_email: process.env.TESTER_TECHNICIAN_EMAIL as string,
   tester_technician_password: process.env.TESTER_TECHNICIAN_PASSWORD as string,
+
+  stripe_secret_key: process.env.STRIPE_SECRET_KEY as string,
+  stripe_webhook_secret: process.env.STRIPE_WEBHOOK_SECRET as string,
 };
