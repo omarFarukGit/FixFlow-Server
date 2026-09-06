@@ -19,6 +19,17 @@ export interface IGetMyServiceRequestsQuery {
   sortOrder?: "asc" | "desc";
 }
 
+export interface IGetAllServiceRequestsQuery {
+  page?: number;
+  limit?: number;
+  status?: ServiceRequestStatus;
+  search?: string;
+  city?: string;
+  area?: string;
+  sortBy?: "createdAt" | "scheduledAt" | "estimatedPrice" | "finalPrice";
+  sortOrder?: "asc" | "desc";
+}
+
 export interface IUpdateServiceRequestPayload {
   title?: string;
   description?: string;
@@ -28,4 +39,12 @@ export interface IUpdateServiceRequestPayload {
   scheduledAt?: string;
   estimatedPrice?: number;
   categoryId?: string;
+}
+
+export interface IAssignTechnicianPayload {
+  technicianId: string;
+}
+
+export interface ICompleteServiceRequestPayload {
+  finalPrice: number;
 }

@@ -94,10 +94,100 @@ const cancelMyServiceRequest = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
+const getAllServiceRequests = catchAsync(async (req, res) => {
+  const query =
+    ServiceRequestValidationSchema.GetAllServiceRequestsValidationSchema.parse(
+      req.query,
+    );
+
+  const result = await ServiceRequestService.getAllServiceRequests(query);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Service requests retrieved successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
+const assignTechnician = catchAsync(async (req, res) => {
+  const { id } = req.params;
+
+  const result = await ServiceRequestService.assignTechnician(
+    id as string,
+    req.body,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Technician assigned successfully",
+    data: result,
+  });
+});
+
+const acceptServiceRequest = catchAsync(async (req, res) => {
+  const technicianId = req.user?.userId;
+  const { id } = req.params;
+
+  const result = await ServiceRequestService.acceptServiceRequest(
+    technicianId as string,
+    id as string,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Service request accepted successfully",
+    data: result,
+  });
+});
+
+const startServiceRequest = catchAsync(async (req, res) => {
+  const technicianId = req.user?.userId as string;
+  const { id } = req.params;
+
+  const result = await ServiceRequestService.startServiceRequest(
+    technicianId,
+    id as string,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Service request started successfully",
+    data: result,
+  });
+});
+
+const completeServiceRequest = catchAsync(async (req, res) => {
+  const technicianId = req.user?.userId as string;
+  const { id } = req.params;
+
+  const result = await ServiceRequestService.completeServiceRequest(
+    technicianId,
+    id as string,
+    req.body,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Service request completed successfully",
+    data: result,
+  });
+});
 export const ServiceRequestController = {
   createServiceRequest,
   getMyServiceRequests,
   getMyServiceRequestById,
   updateMyServiceRequest,
   cancelMyServiceRequest,
+  getAllServiceRequests,
+  assignTechnician,
+  acceptServiceRequest,
+  startServiceRequest,
+  completeServiceRequest,
 };

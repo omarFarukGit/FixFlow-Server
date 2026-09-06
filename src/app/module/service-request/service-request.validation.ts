@@ -85,8 +85,47 @@ export const UpdateServiceRequestValidationSchema = z.object({
   categoryId: z.uuid("Invalid category ID").optional(),
 });
 
+const GetAllServiceRequestsValidationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+
+  status: z
+    .enum([
+      "PENDING",
+      "ACCEPTED",
+      "ASSIGNED",
+      "IN_PROGRESS",
+      "COMPLETED",
+      "CANCELLED",
+    ])
+    .optional(),
+
+  search: z.string().trim().max(100).optional(),
+
+  city: z.string().trim().max(100).optional(),
+
+  area: z.string().trim().max(100).optional(),
+
+  sortBy: z
+    .enum(["createdAt", "scheduledAt", "estimatedPrice", "finalPrice"])
+    .default("createdAt"),
+
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+});
+
+const AssignTechnicianValidationSchema = z.object({
+  technicianId: z.uuid("Invalid technician ID"),
+});
+
+const CompleteServiceRequestValidationSchema = z.object({
+  finalPrice: z.number().positive("Final price must be greater than 0"),
+});
 export const ServiceRequestValidationSchema = {
   CreateServiceRequestValidationSchema,
   GetMyServiceRequestsValidationSchema,
   UpdateServiceRequestValidationSchema,
+  GetAllServiceRequestsValidationSchema,
+  AssignTechnicianValidationSchema,
+  CompleteServiceRequestValidationSchema,
 };
