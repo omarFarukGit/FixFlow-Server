@@ -21,6 +21,9 @@ tags:
 
   - name: Category
     description: Service category management APIs
+  
+  - name: Service Request
+    description: Service request management APIs
 paths:
   /auth/register:
     post:
@@ -1538,6 +1541,1235 @@ paths:
 
         "404":
           description: Category not found
+
+        "500":
+          description: Internal server error
+
+  /service-requests:
+    post:
+      tags:
+        - Service Request
+
+      summary: Create a service request
+
+      description: >
+        Allows an authenticated customer to create a new service request.
+        The customer ID is automatically taken from the authenticated user.
+        The initial request status is set to PENDING.
+
+      operationId: createServiceRequest
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+
+              required:
+                - title
+                - description
+                - address
+                - categoryId
+
+              properties:
+                title:
+                  type: string
+                  minLength: 3
+                  maxLength: 200
+                  example: AC not cooling
+
+                description:
+                  type: string
+                  minLength: 10
+                  maxLength: 2000
+                  example: >
+                    My AC is running but it is not cooling properly.
+
+                address:
+                  type: string
+                  minLength: 5
+                  maxLength: 255
+                  example: House 12, Road 5, Mirpur, Dhaka
+
+                city:
+                  type: string
+                  maxLength: 100
+                  example: Dhaka
+
+                area:
+                  type: string
+                  maxLength: 100
+                  example: Mirpur
+
+                scheduledAt:
+                  type: string
+                  format: date-time
+                  example: "2026-09-10T10:00:00.000Z"
+
+                estimatedPrice:
+                  type: number
+                  format: double
+                  minimum: 0
+                  example: 1000
+
+                categoryId:
+                  type: string
+                  format: uuid
+                  description: ID of the service category
+                  example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+
+      responses:
+        "201":
+          description: Service request created successfully
+
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+                  statusCode:
+                    type: integer
+                    example: 201
+
+                  message:
+                    type: string
+                    example: Service request created successfully
+
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: 7b7c1d7e-8b12-4a9a-9f4e-123456789abc
+
+                      title:
+                        type: string
+                        example: AC not cooling
+
+                      description:
+                        type: string
+                        example: My AC is running but it is not cooling properly.
+
+                      address:
+                        type: string
+                        example: House 12, Road 5, Mirpur, Dhaka
+
+                      city:
+                        type: string
+                        nullable: true
+                        example: Dhaka
+
+                      area:
+                        type: string
+                        nullable: true
+                        example: Mirpur
+
+                      scheduledAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: "2026-09-10T10:00:00.000Z"
+
+                      estimatedPrice:
+                        type: number
+                        format: double
+                        nullable: true
+                        example: 1000
+
+                      finalPrice:
+                        type: number
+                        format: double
+                        nullable: true
+                        example: null
+
+                      status:
+                        type: string
+                        enum:
+                          - PENDING
+                          - ACCEPTED
+                          - ASSIGNED
+                          - IN_PROGRESS
+                          - COMPLETED
+                          - CANCELLED
+                        example: PENDING
+
+                      customerId:
+                        type: string
+                        format: uuid
+                        example: 8c8d2e8f-9c23-4b0a-8f5d-987654321abc
+
+                      technicianId:
+                        type: string
+                        format: uuid
+                        nullable: true
+                        example: null
+
+                      categoryId:
+                        type: string
+                        format: uuid
+                        example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+
+                      isDeleted:
+                        type: boolean
+                        example: false
+
+                      deletedAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: null
+
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2026-09-06T08:00:00.000Z"
+
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: "2026-09-06T08:00:00.000Z"
+
+                      category:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+
+                          name:
+                            type: string
+                            example: AC Repair
+
+                          description:
+                            type: string
+                            nullable: true
+                            example: Air conditioner repair, maintenance, and installation services.
+
+        "400":
+          description: Validation error
+
+        "401":
+          description: Unauthorized - Access token is missing or invalid
+
+        "403":
+          description: Forbidden - Only customers can create service requests
+
+        "404":
+          description: Service category not found
+
+        "500":
+          description: Internal server error
+
+    get:
+      tags:
+        - Service Request
+      summary: Get my service requests
+      description: >
+        Retrieves all non-deleted service requests created by the
+        authenticated customer. Supports pagination, status filtering,
+        search, and sorting.
+
+      operationId: getMyServiceRequests
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+
+        - name: limit
+          in: query
+          required: false
+          description: Number of service requests per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          example: 10
+
+        - name: status
+          in: query
+          required: false
+          description: Filter service requests by status
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - ACCEPTED
+              - ASSIGNED
+              - IN_PROGRESS
+              - COMPLETED
+              - CANCELLED
+          example: PENDING
+
+        - name: search
+          in: query
+          required: false
+          description: >
+            Search service requests by title, description, address,
+            city, or area.
+          schema:
+            type: string
+            maxLength: 100
+          example: AC
+
+        - name: sortBy
+          in: query
+          required: false
+          description: Field used to sort service requests
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - scheduledAt
+              - estimatedPrice
+              - finalPrice
+            default: createdAt
+          example: createdAt
+
+        - name: sortOrder
+          in: query
+          required: false
+          description: Sort direction
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          example: desc
+
+      responses:
+        "200":
+          description: Service requests retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+                  statusCode:
+                    type: integer
+                    example: 200
+
+                  message:
+                    type: string
+                    example: Service requests retrieved successfully
+
+                  data:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                              example: 4dee7d9d-4293-407a-8a00-cccb1d363b45
+
+                            title:
+                              type: string
+                              example: AC not cooling
+
+                            description:
+                              type: string
+                              example: My AC is running but it is not cooling properly.
+
+                            address:
+                              type: string
+                              example: House 12, Road 5, Mirpur
+
+                            city:
+                              type: string
+                              nullable: true
+                              example: Dhaka
+
+                            area:
+                              type: string
+                              nullable: true
+                              example: Mirpur
+
+                            scheduledAt:
+                              type: string
+                              format: date-time
+                              nullable: true
+                              example: 2026-09-10T10:00:00.000Z
+
+                            estimatedPrice:
+                              type: string
+                              nullable: true
+                              example: "1000"
+
+                            finalPrice:
+                              type: string
+                              nullable: true
+                              example: null
+
+                            status:
+                              type: string
+                              enum:
+                                - PENDING
+                                - ACCEPTED
+                                - ASSIGNED
+                                - IN_PROGRESS
+                                - COMPLETED
+                                - CANCELLED
+                              example: PENDING
+
+                            customerId:
+                              type: string
+                              format: uuid
+                              example: 49430397-4c72-4da3-b7ae-768f779b4b96
+
+                            technicianId:
+                              type: string
+                              format: uuid
+                              nullable: true
+                              example: null
+
+                            categoryId:
+                              type: string
+                              format: uuid
+                              example: 6baa9761-4e18-45d5-b185-3d75080bceb4
+
+                            isDeleted:
+                              type: boolean
+                              example: false
+
+                            deletedAt:
+                              type: string
+                              format: date-time
+                              nullable: true
+                              example: null
+
+                            createdAt:
+                              type: string
+                              format: date-time
+                              example: 2026-09-06T01:58:22.272Z
+
+                            updatedAt:
+                              type: string
+                              format: date-time
+                              example: 2026-09-06T01:58:22.272Z
+
+                            category:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  format: uuid
+                                  example: 6baa9761-4e18-45d5-b185-3d75080bceb4
+
+                                name:
+                                  type: string
+                                  example: AC Repair
+
+                                description:
+                                  type: string
+                                  nullable: true
+                                  example: Air conditioner repair, maintenance, and installation services.
+
+                                imageUrl:
+                                  type: string
+                                  example: https://res.cloudinary.com/fixflow/image/upload/ac-repair.jpg
+
+                            technician:
+                              type: object
+                              nullable: true
+                              properties:
+                                id:
+                                  type: string
+                                  format: uuid
+                                  example: technician-id
+
+                                name:
+                                  type: string
+                                  example: Test Technician
+
+                                email:
+                                  type: string
+                                  format: email
+                                  example: technician@fixflow.com
+
+                                phone:
+                                  type: string
+                                  nullable: true
+                                  example: "+8801700000000"
+
+                                imageUrl:
+                                  type: string
+                                  example: ""
+
+                                technicianProfile:
+                                  type: object
+                                  nullable: true
+                                  properties:
+                                    bio:
+                                      type: string
+                                      nullable: true
+                                      example: Experienced AC technician.
+
+                                    experienceYears:
+                                      type: integer
+                                      example: 5
+
+                                    skills:
+                                      type: array
+                                      items:
+                                        type: string
+                                      example:
+                                        - AC Repair
+                                        - AC Installation
+
+                                    hourlyRate:
+                                      type: string
+                                      nullable: true
+                                      example: "500"
+
+                                    status:
+                                      type: string
+                                      enum:
+                                        - AVAILABLE
+                                        - BUSY
+                                        - OFFLINE
+                                      example: AVAILABLE
+
+                                    averageRating:
+                                      type: number
+                                      format: float
+                                      example: 4.5
+
+                                    totalJobs:
+                                      type: integer
+                                      example: 25
+
+                            payment:
+                              type: object
+                              nullable: true
+                              example: null
+
+                            review:
+                              type: object
+                              nullable: true
+                              example: null
+
+                      meta:
+                        type: object
+                        properties:
+                          page:
+                            type: integer
+                            example: 1
+
+                          limit:
+                            type: integer
+                            example: 10
+
+                          total:
+                            type: integer
+                            example: 2
+
+                          totalPages:
+                            type: integer
+                            example: 1
+
+        "400":
+          description: Invalid query parameters
+
+        "401":
+          description: Unauthorized - authentication required
+
+        "403":
+          description: Forbidden - only customers can access their service requests
+
+        "500":
+          description: Internal server error
+
+  /service-requests/{id}:
+    get:
+      tags:
+        - Service Request
+
+      summary: Get my service request details
+
+      description: >
+        Retrieves detailed information about a specific service request
+        belonging to the authenticated customer. Only the customer who
+        created the service request can access it.
+
+      operationId: getMyServiceRequestById
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the service request
+          schema:
+            type: string
+            format: uuid
+          example: 4dee7d9d-4293-407a-8a00-cccb1d363b45
+
+      responses:
+        "200":
+          description: Service request retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+                  statusCode:
+                    type: integer
+                    example: 200
+
+                  message:
+                    type: string
+                    example: Service request retrieved successfully
+
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: 4dee7d9d-4293-407a-8a00-cccb1d363b45
+
+                      title:
+                        type: string
+                        example: AC not cooling
+
+                      description:
+                        type: string
+                        example: My AC is running but it is not cooling properly.
+
+                      address:
+                        type: string
+                        example: House 12, Road 5, Mirpur
+
+                      city:
+                        type: string
+                        nullable: true
+                        example: Dhaka
+
+                      area:
+                        type: string
+                        nullable: true
+                        example: Mirpur
+
+                      scheduledAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: 2026-09-10T10:00:00.000Z
+
+                      estimatedPrice:
+                        type: string
+                        nullable: true
+                        example: "1000"
+
+                      finalPrice:
+                        type: string
+                        nullable: true
+                        example: null
+
+                      status:
+                        type: string
+                        enum:
+                          - PENDING
+                          - ACCEPTED
+                          - ASSIGNED
+                          - IN_PROGRESS
+                          - COMPLETED
+                          - CANCELLED
+                        example: PENDING
+
+                      customerId:
+                        type: string
+                        format: uuid
+                        example: 49430397-4c72-4da3-b7ae-768f779b4b96
+
+                      technicianId:
+                        type: string
+                        format: uuid
+                        nullable: true
+                        example: null
+
+                      categoryId:
+                        type: string
+                        format: uuid
+                        example: 6baa9761-4e18-45d5-b185-3d75080bceb4
+
+                      isDeleted:
+                        type: boolean
+                        example: false
+
+                      deletedAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: null
+
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: 2026-09-06T01:58:22.272Z
+
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: 2026-09-06T01:58:22.272Z
+
+                      category:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            example: 6baa9761-4e18-45d5-b185-3d75080bceb4
+
+                          name:
+                            type: string
+                            example: AC Repair
+
+                          description:
+                            type: string
+                            nullable: true
+                            example: Air conditioner repair, maintenance, and installation services.
+
+                          imageUrl:
+                            type: string
+                            example: https://res.cloudinary.com/fixflow/image/upload/ac-repair.jpg
+
+                      technician:
+                        type: object
+                        nullable: true
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            example: technician-id
+
+                          name:
+                            type: string
+                            example: Test Technician
+
+                          email:
+                            type: string
+                            format: email
+                            example: technician@fixflow.com
+
+                          phone:
+                            type: string
+                            nullable: true
+                            example: "+8801700000000"
+
+                          imageUrl:
+                            type: string
+                            example: ""
+
+                          technicianProfile:
+                            type: object
+                            nullable: true
+                            properties:
+                              bio:
+                                type: string
+                                nullable: true
+                                example: Experienced AC technician.
+
+                              experienceYears:
+                                type: integer
+                                example: 5
+
+                              skills:
+                                type: array
+                                items:
+                                  type: string
+                                example:
+                                  - AC Repair
+                                  - AC Installation
+
+                              hourlyRate:
+                                type: string
+                                nullable: true
+                                example: "500"
+
+                              status:
+                                type: string
+                                enum:
+                                  - AVAILABLE
+                                  - BUSY
+                                  - OFFLINE
+                                example: AVAILABLE
+
+                              averageRating:
+                                type: number
+                                format: float
+                                example: 4.5
+
+                              totalJobs:
+                                type: integer
+                                example: 25
+
+                      payment:
+                        type: object
+                        nullable: true
+                        example: null
+
+                      review:
+                        type: object
+                        nullable: true
+                        example: null
+
+        "400":
+          description: Invalid service request ID
+
+        "401":
+          description: Unauthorized - authentication required
+
+        "403":
+          description: Forbidden - only customers can access this endpoint
+
+        "404":
+          description: Service request not found
+
+        "500":
+          description: Internal server error
+
+    patch:
+      tags:
+        - Service Request
+
+      summary: Update my service request
+
+      description: >
+        Updates an existing service request created by the authenticated
+        customer. Only service requests belonging to the authenticated
+        customer can be updated, and only requests with PENDING status
+        are eligible for updates.
+
+      operationId: updateMyServiceRequest
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the service request
+          schema:
+            type: string
+            format: uuid
+          example: 4dee7d9d-4293-407a-8a00-cccb1d363b45
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 3
+                  maxLength: 200
+                  example: AC cooling problem
+
+                description:
+                  type: string
+                  minLength: 10
+                  maxLength: 2000
+                  example: The AC is running but the room is not cooling properly.
+
+                address:
+                  type: string
+                  minLength: 5
+                  maxLength: 255
+                  example: House 15, Road 7, Mirpur
+
+                city:
+                  type: string
+                  maxLength: 100
+                  example: Dhaka
+
+                area:
+                  type: string
+                  maxLength: 100
+                  example: Mirpur
+
+                scheduledAt:
+                  type: string
+                  format: date-time
+                  example: 2026-09-12T10:00:00.000Z
+
+                estimatedPrice:
+                  type: number
+                  format: double
+                  minimum: 0
+                  exclusiveMinimum: true
+                  example: 1200
+
+                categoryId:
+                  type: string
+                  format: uuid
+                  example: 6baa9761-4e18-45d5-b185-3d75080bceb4
+
+      responses:
+        "200":
+          description: Service request updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+                  statusCode:
+                    type: integer
+                    example: 200
+
+                  message:
+                    type: string
+                    example: Service request updated successfully
+
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: 4dee7d9d-4293-407a-8a00-cccb1d363b45
+
+                      title:
+                        type: string
+                        example: AC cooling problem
+
+                      description:
+                        type: string
+                        example: The AC is running but the room is not cooling properly.
+
+                      address:
+                        type: string
+                        example: House 15, Road 7, Mirpur
+
+                      city:
+                        type: string
+                        nullable: true
+                        example: Dhaka
+
+                      area:
+                        type: string
+                        nullable: true
+                        example: Mirpur
+
+                      scheduledAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: 2026-09-12T10:00:00.000Z
+
+                      estimatedPrice:
+                        type: string
+                        nullable: true
+                        example: "1200"
+
+                      finalPrice:
+                        type: string
+                        nullable: true
+                        example: null
+
+                      status:
+                        type: string
+                        enum:
+                          - PENDING
+                          - ACCEPTED
+                          - ASSIGNED
+                          - IN_PROGRESS
+                          - COMPLETED
+                          - CANCELLED
+                        example: PENDING
+
+                      customerId:
+                        type: string
+                        format: uuid
+                        example: 49430397-4c72-4da3-b7ae-768f779b4b96
+
+                      technicianId:
+                        type: string
+                        format: uuid
+                        nullable: true
+                        example: null
+
+                      categoryId:
+                        type: string
+                        format: uuid
+                        example: 6baa9761-4e18-45d5-b185-3d75080bceb4
+
+                      isDeleted:
+                        type: boolean
+                        example: false
+
+                      deletedAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: null
+
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: 2026-09-06T01:58:22.272Z
+
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: 2026-09-06T03:20:10.100Z
+
+                      category:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            example: 6baa9761-4e18-45d5-b185-3d75080bceb4
+
+                          name:
+                            type: string
+                            example: AC Repair
+
+                          description:
+                            type: string
+                            nullable: true
+                            example: Air conditioner repair, maintenance, and installation services.
+
+                          imageUrl:
+                            type: string
+                            example: https://res.cloudinary.com/fixflow/image/upload/ac-repair.jpg
+
+        "400":
+          description: >
+            Invalid request data or service request cannot be updated
+            because its status is not PENDING
+
+        "401":
+          description: Unauthorized - authentication required
+
+        "403":
+          description: Forbidden - only customers can update service requests
+
+        "404":
+          description: Service request or category not found
+
+        "500":
+          description: Internal server error
+  
+  /service-requests/{id}/cancel:
+    patch:
+      tags:
+        - Service Request
+
+      summary: Cancel my service request
+
+      description: >
+        Cancels a service request created by the authenticated customer.
+        Only the customer who created the service request can cancel it.
+        Only service requests with PENDING status can be cancelled.
+        Cancellation changes the request status to CANCELLED without
+        soft deleting the record.
+
+      operationId: cancelMyServiceRequest
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the service request
+          schema:
+            type: string
+            format: uuid
+          example: 4dee7d9d-4293-407a-8a00-cccb1d363b45
+
+      responses:
+        "200":
+          description: Service request cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+                  statusCode:
+                    type: integer
+                    example: 200
+
+                  message:
+                    type: string
+                    example: Service request cancelled successfully
+
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: 4dee7d9d-4293-407a-8a00-cccb1d363b45
+
+                      title:
+                        type: string
+                        example: AC not cooling
+
+                      description:
+                        type: string
+                        example: My AC is running but it is not cooling properly.
+
+                      address:
+                        type: string
+                        example: House 12, Road 5, Mirpur
+
+                      city:
+                        type: string
+                        nullable: true
+                        example: Dhaka
+
+                      area:
+                        type: string
+                        nullable: true
+                        example: Mirpur
+
+                      scheduledAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: 2026-09-10T10:00:00.000Z
+
+                      estimatedPrice:
+                        type: string
+                        nullable: true
+                        example: "1000"
+
+                      finalPrice:
+                        type: string
+                        nullable: true
+                        example: null
+
+                      status:
+                        type: string
+                        enum:
+                          - PENDING
+                          - ACCEPTED
+                          - ASSIGNED
+                          - IN_PROGRESS
+                          - COMPLETED
+                          - CANCELLED
+                        example: CANCELLED
+
+                      customerId:
+                        type: string
+                        format: uuid
+                        example: 49430397-4c72-4da3-b7ae-768f779b4b96
+
+                      technicianId:
+                        type: string
+                        format: uuid
+                        nullable: true
+                        example: null
+
+                      categoryId:
+                        type: string
+                        format: uuid
+                        example: 6baa9761-4e18-45d5-b185-3d75080bceb4
+
+                      isDeleted:
+                        type: boolean
+                        example: false
+
+                      deletedAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: null
+
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: 2026-09-06T01:58:22.272Z
+
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: 2026-09-06T04:00:00.000Z
+
+                      category:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            example: 6baa9761-4e18-45d5-b185-3d75080bceb4
+
+                          name:
+                            type: string
+                            example: AC Repair
+
+                          description:
+                            type: string
+                            nullable: true
+                            example: Air conditioner repair, maintenance, and installation services.
+
+                          imageUrl:
+                            type: string
+                            example: https://res.cloudinary.com/fixflow/image/upload/ac-repair.jpg
+
+        "400":
+          description: >
+            Service request cannot be cancelled because its status
+            is not PENDING
+
+        "401":
+          description: Unauthorized - authentication required
+
+        "403":
+          description: Forbidden - only customers can cancel service requests
+
+        "404":
+          description: Service request not found
 
         "500":
           description: Internal server error

@@ -10,6 +10,7 @@ import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { notFound } from "./app/middleware/notFound";
 import { authRoutes } from "./app/module/auth/auth.route";
 import { categoryRoutes } from "./app/module/category/category.route";
+import { ServiceRequestRoutes } from "./app/module/service-request/service-request.route";
 import { technicianRoute } from "./app/module/technician/technician.route";
 import { userRoute } from "./app/module/user/user.route";
 
@@ -32,6 +33,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoute);
 app.use("/api/v1/technicians", technicianRoute);
 app.use("/api/v1/categories", categoryRoutes);
+app.use("/api/v1/service-requests", ServiceRequestRoutes);
 app.use(globalErrorHandler);
 app.use(notFound);
 export default app;
