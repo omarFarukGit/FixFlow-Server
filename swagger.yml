@@ -161,7 +161,7 @@ paths:
                 email:
                   type: string
                   format: email
-                  example: muhammadabuhafiz@gmail.com
+                  example: customer@fixflow.com
                 password:
                   type: string
                   format: password
@@ -709,7 +709,7 @@ paths:
                 categoryId:
                   type: string
                   format: uuid
-                  example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+                  example: 0f2a64c8-638b-4b48-94b1-8e031cbdb27f
       responses:
         '201':
           description: Service request created successfully
@@ -2635,6 +2635,258 @@ paths:
           description: Forbidden - Admin access required
         '500':
           description: Internal server error
+  /service-requests/technician/my-services:
+    get:
+      tags:
+        - Technician
+      summary: Get my assigned services
+      description: |
+        Allows an authenticated technician to retrieve all service requests assigned to the currently logged-in technician. Supports pagination, status filtering, and sorting.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          required: false
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - in: query
+          name: limit
+          required: false
+          description: Number of services per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          example: 10
+        - in: query
+          name: status
+          required: false
+          description: Filter services by status
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - ACCEPTED
+              - ASSIGNED
+              - IN_PROGRESS
+              - COMPLETED
+              - CANCELLED
+          example: ASSIGNED
+        - in: query
+          name: sortBy
+          required: false
+          description: Field used for sorting
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - scheduledAt
+            default: createdAt
+          example: scheduledAt
+        - in: query
+          name: sortOrder
+          required: false
+          description: Sorting direction
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          example: asc
+      responses:
+        '200':
+          description: Assigned services retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Assigned services retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      meta:
+                        type: object
+                        properties:
+                          page:
+                            type: integer
+                            example: 1
+                          limit:
+                            type: integer
+                            example: 10
+                          total:
+                            type: integer
+                            example: 2
+                          totalPages:
+                            type: integer
+                            example: 1
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                              example: 550e8400-e29b-41d4-a716-446655440000
+                            title:
+                              type: string
+                              example: AC Repair
+                            description:
+                              type: string
+                              example: AC is not cooling properly
+                            address:
+                              type: string
+                              example: Dhanmondi, Dhaka
+                            city:
+                              type: string
+                              nullable: true
+                              example: Dhaka
+                            area:
+                              type: string
+                              nullable: true
+                              example: Dhanmondi
+                            scheduledAt:
+                              type: string
+                              format: date-time
+                              nullable: true
+                              example: '2026-09-10T10:00:00.000Z'
+                            estimatedPrice:
+                              type: string
+                              nullable: true
+                              example: '1500'
+                            finalPrice:
+                              type: string
+                              nullable: true
+                              example: '1800'
+                            status:
+                              type: string
+                              enum:
+                                - PENDING
+                                - ACCEPTED
+                                - ASSIGNED
+                                - IN_PROGRESS
+                                - COMPLETED
+                                - CANCELLED
+                              example: ASSIGNED
+                            customerId:
+                              type: string
+                              format: uuid
+                              example: 650e8400-e29b-41d4-a716-446655440001
+                            technicianId:
+                              type: string
+                              format: uuid
+                              example: 750e8400-e29b-41d4-a716-446655440002
+                            categoryId:
+                              type: string
+                              format: uuid
+                              example: 850e8400-e29b-41d4-a716-446655440003
+                            createdAt:
+                              type: string
+                              format: date-time
+                              example: '2026-09-07T10:00:00.000Z'
+                            updatedAt:
+                              type: string
+                              format: date-time
+                              example: '2026-09-07T12:00:00.000Z'
+                            customer:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  format: uuid
+                                  example: 650e8400-e29b-41d4-a716-446655440001
+                                name:
+                                  type: string
+                                  example: Test Customer
+                                email:
+                                  type: string
+                                  format: email
+                                  example: customer@fixflow.com
+                                phone:
+                                  type: string
+                                  nullable: true
+                                  example: '01712345678'
+                                imageUrl:
+                                  type: string
+                                  example: ''
+                            category:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  format: uuid
+                                  example: 850e8400-e29b-41d4-a716-446655440003
+                                name:
+                                  type: string
+                                  example: AC Repair
+                                description:
+                                  type: string
+                                  nullable: true
+                                  example: Air conditioner repair service
+        '401':
+          description: Unauthorized - Authentication token is missing or invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Unauthorized
+                  errors:
+                    type: array
+                    items:
+                      type: object
+        '403':
+          description: Forbidden - Only technicians can access this endpoint
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: You are not authorized to access this resource
+                  errors:
+                    type: array
+                    items:
+                      type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Internal Server Error
+                  errors:
+                    type: array
+                    items:
+                      type: object
 components:
   securitySchemes:
     bearerAuth:

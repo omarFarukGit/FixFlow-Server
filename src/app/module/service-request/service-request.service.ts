@@ -7,6 +7,7 @@ import type {
   ICompleteServiceRequestPayload,
   ICreateServiceRequestPayload,
   IGetAllServiceRequestsQuery,
+  IGetMyAssignedServicesQuery,
   IGetMyServiceRequestsQuery,
   IUpdateServiceRequestPayload,
 } from "./service-request.interface";
@@ -929,6 +930,111 @@ const completeServiceRequest = async (
 
   return completedServiceRequest;
 };
+
+const getMyAssignedServices = async (
+  technicianId: string,
+  query: IGetMyAssignedServicesQuery,
+) => {
+  const {
+    page = 1,
+    limit = 10,
+    status,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+  } = query;
+
+  // Convert query params to numbers
+  const pageNumber = Number(page);
+  const limitNumber = Number(limit);
+
+  const skip = (pageNumber - 1) * limitNumber;
+
+  // Make sure logged-in user is actually a technician
+  const technician = await prisma.user.findFirst({
+    where: {
+      id: technicianId,
+      role: "TECHNICIAN",
+      isDeleted: false,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!technician) {
+    throw new AppError(httpStatus.NOT_FOUND, "Technician not found");
+  }
+
+  const where = {
+    technicianId,
+    isDeleted: false,
+    ...(status && { status }),
+  };
+
+  const [services, total] = await Promise.all([
+    prisma.serviceRequest.findMany({
+      where,
+      skip,
+      take: limitNumber,
+
+      orderBy: {
+        [sortBy]: sortOrder,
+      },
+
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        address: true,
+        city: true,
+        area: true,
+        scheduledAt: true,
+        estimatedPrice: true,
+        finalPrice: true,
+        status: true,
+        customerId: true,
+        technicianId: true,
+        categoryId: true,
+        createdAt: true,
+        updatedAt: true,
+
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            imageUrl: true,
+          },
+        },
+
+        category: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
+      },
+    }),
+
+    prisma.serviceRequest.count({
+      where,
+    }),
+  ]);
+
+  return {
+    meta: {
+      page: pageNumber,
+      limit: limitNumber,
+      total,
+      totalPages: Math.ceil(total / limitNumber),
+    },
+
+    data: services,
+  };
+};
+
 export const ServiceRequestService = {
   createServiceRequest,
   getMyServiceRequests,
@@ -940,4 +1046,5 @@ export const ServiceRequestService = {
   acceptServiceRequest,
   startServiceRequest,
   completeServiceRequest,
+  getMyAssignedServices,
 };

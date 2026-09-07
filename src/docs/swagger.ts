@@ -6,7 +6,7 @@ import YAML from "yaml";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const swaggerPath = path.resolve(__dirname, "../swagger.yml");
+const swaggerPath = path.resolve(__dirname, "../../swagger.yml");
 
 const swaggerYaml = fs.readFileSync(swaggerPath, "utf-8");
 

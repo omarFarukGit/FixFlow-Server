@@ -57,6 +57,15 @@ router.patch(
 );
 
 router.get(
+  "/technician/my-services",
+  auth("TECHNICIAN"),
+  validateRequest(
+    ServiceRequestValidationSchema.GetMyAssignedServicesValidationSchema,
+  ),
+  ServiceRequestController.getMyAssignedServices,
+);
+
+router.get(
   "/:id",
   auth(Role.CUSTOMER),
   ServiceRequestController.getMyServiceRequestById,

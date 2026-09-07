@@ -48,3 +48,10 @@ export interface IAssignTechnicianPayload {
 export interface ICompleteServiceRequestPayload {
   finalPrice: number;
 }
+export interface IGetMyAssignedServicesQuery {
+  page?: number;
+  limit?: number;
+  status?: ServiceRequestStatus;
+  sortBy?: "createdAt" | "scheduledAt";
+  sortOrder?: "asc" | "desc";
+}

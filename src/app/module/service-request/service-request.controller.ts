@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
+import type { IGetMyAssignedServicesQuery } from "./service-request.interface";
 import { ServiceRequestService } from "./service-request.service";
 import { ServiceRequestValidationSchema } from "./service-request.validation";
 
@@ -181,6 +182,22 @@ const completeServiceRequest = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
+const getMyAssignedServices = catchAsync(async (req, res) => {
+  const technicianId = req.user?.userId as string;
+
+  const result = await ServiceRequestService.getMyAssignedServices(
+    technicianId,
+    req.query as unknown as IGetMyAssignedServicesQuery,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Assigned services retrieved successfully",
+    data: result,
+  });
+});
 export const ServiceRequestController = {
   createServiceRequest,
   getMyServiceRequests,
@@ -192,4 +209,5 @@ export const ServiceRequestController = {
   acceptServiceRequest,
   startServiceRequest,
   completeServiceRequest,
+  getMyAssignedServices,
 };
