@@ -1100,6 +1100,101 @@ paths:
           description: Technician profile or user not found
         '500':
           description: Internal server error
+  /technicians/{technicianId}/approve:
+    patch:
+      tags:
+        - Admin
+      summary: Approve a technician
+      description: Admin can approve a technician so the technician can receive service assignments.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: technicianId
+          required: true
+          description: User ID of the technician
+          schema:
+            type: string
+            format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+      responses:
+        '200':
+          description: Technician approved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Technician approved successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: 987e6543-e21b-12d3-a456-426614174111
+                      userId:
+                        type: string
+                        format: uuid
+                        example: 123e4567-e89b-12d3-a456-426614174000
+                      bio:
+                        type: string
+                        nullable: true
+                        example: Experienced AC technician
+                      experienceYears:
+                        type: integer
+                        example: 5
+                      skills:
+                        type: array
+                        items:
+                          type: string
+                        example:
+                          - AC Repair
+                          - Electrical
+                      hourlyRate:
+                        type: string
+                        nullable: true
+                        example: '500.00'
+                      status:
+                        type: string
+                        enum:
+                          - AVAILABLE
+                          - BUSY
+                          - OFFLINE
+                        example: AVAILABLE
+                      averageRating:
+                        type: number
+                        format: float
+                        example: 0
+                      totalJobs:
+                        type: integer
+                        example: 0
+                      isApproved:
+                        type: boolean
+                        example: true
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: '2026-09-07T10:30:00.000Z'
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: '2026-09-07T10:35:00.000Z'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Admin access required
+        '404':
+          description: Technician not found
+        '409':
+          description: Technician is already approved
+        '500':
+          description: Internal server error
   /service-requests/{id}/accept:
     patch:
       tags:

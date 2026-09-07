@@ -16,6 +16,22 @@ const updateMyProfile = catchAsync(async (req, res) => {
   });
 });
 
-export const technicianProfileController = {
+const approveTechnician = catchAsync(async (req, res) => {
+  const { technicianId } = req.params;
+
+  const result = await technicianService.approveTechnician(
+    technicianId as string,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Technician approved successfully",
+    data: result,
+  });
+});
+
+export const technicianController = {
   updateMyProfile,
+  approveTechnician,
 };
