@@ -1,0 +1,29 @@
+model Payment {
+  id String @id @default(uuid())
+
+  amount Decimal @db.Decimal(10, 2)
+
+  currency String @default("BDT")
+
+  status PaymentStatus @default(PENDING)
+
+  method PaymentMethod @default(STRIPE)
+
+  transactionId String? @unique
+
+  stripeSessionId String? @unique
+
+  serviceRequestId String @unique
+
+  customerId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  serviceRequest ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+
+  customer User @relation(fields: [customerId], references: [id])
+
+  @@index([status])
+  @@index([customerId])
+}

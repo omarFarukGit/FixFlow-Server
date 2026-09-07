@@ -4,18 +4,35 @@ info:
   description: Field Service Management System API
   version: 1.0.0
 servers:
+  - url: https://fixflow-server.vercel.app/api/v1
+    description: Live development server
   - url: http://localhost:5000/api/v1
     description: Local development server
 tags:
   - name: Auth
     description: Authentication APIs
+  - name: User
+    description: User profile management APIs
+  - name: Customer
+    description: Customer APIs
+  - name: Technician
+    description: Technician APIs
+  - name: Admin
+    description: Admin APIs
+  - name: Category
+    description: Public service category APIs
+  - name: Payment
+    description: Payment APIs
+  - name: Review
+    description: Review and rating APIs
 paths:
   /auth/register:
     post:
       tags:
         - Auth
       summary: Register a new user
-      description: Create a new customer account.
+      description: |
+        Creates a new Customer or Technician account and sends an email verification OTP to the user's email address.
       operationId: registerUser
       requestBody:
         required: true
@@ -27,6 +44,7 @@ paths:
                 - name
                 - email
                 - password
+                - role
               properties:
                 name:
                   type: string
@@ -39,9 +57,1082 @@ paths:
                   type: string
                   format: password
                   example: Password123!
+                role:
+                  type: string
+                  enum:
+                    - CUSTOMER
+                    - TECHNICIAN
+                  example: CUSTOMER
       responses:
         '201':
-          description: User registered successfully
+          description: User registered successfully and verification OTP sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 201
+                  message:
+                    type: string
+                    example: Verification OTP sent to your email
+                  data:
+                    type: object
+                    example: {}
+        '400':
+          description: Validation error
+        '409':
+          description: Email already exists
+        '500':
+          description: Internal server error
+  /auth/verify-email:
+    post:
+      tags:
+        - Auth
+      summary: Verify user email
+      description: |
+        Verifies the user's email address using the OTP sent during registration.
+      operationId: verifyEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - otp
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: omar@example.com
+                otp:
+                  type: string
+                  example: '123456'
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Email verified successfully
+                  data:
+                    type: object
+                    example: {}
+        '400':
+          description: Invalid or expired OTP
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login user
+      description: |
+        Authenticates a registered user using email and password and returns an access token and refresh token.
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: customer@fixflow.com
+                password:
+                  type: string
+                  format: password
+                  example: Password123!
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Login successful
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                        description: JWT access token
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                      refreshToken:
+                        type: string
+                        description: JWT refresh token
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        '400':
+          description: Invalid email or password
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+  /auth/refresh-token:
+    post:
+      tags:
+        - Auth
+      summary: Refresh access token
+      description: |
+        Generates a new access token and refresh token using a valid refresh token provided through the Authorization Bearer header.
+      operationId: refreshAccessToken
+      security:
+        - refreshTokenAuth: []
+      responses:
+        '200':
+          description: Refresh token successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Refresh token successful
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                      refreshToken:
+                        type: string
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        '401':
+          description: Invalid or expired refresh token
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+  /auth/forgot-password:
+    post:
+      tags:
+        - Auth
+      summary: Forgot password
+      description: |
+        Sends a password reset OTP to the user's registered email address.
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: muhammadabuhafiz@gmail.com
+      responses:
+        '200':
+          description: Password reset OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Password reset otp sent to your email
+        '400':
+          description: Invalid email address
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+  /auth/reset-password:
+    post:
+      tags:
+        - Auth
+      summary: Reset password
+      description: |
+        Resets the user's password using a valid password reset OTP.
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - otp
+                - newPassword
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: muhammadabuhafiz@gmail.com
+                otp:
+                  type: string
+                  description: Password reset OTP
+                  example: '126066'
+                newPassword:
+                  type: string
+                  format: password
+                  description: New password
+                  example: 588888Aaj*
+      responses:
+        '200':
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Password reset successful
+        '400':
+          description: Invalid request or validation error
+        '401':
+          description: Invalid or expired OTP
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+  /auth/google:
+    get:
+      tags:
+        - Auth
+      summary: Login with Google
+      description: |
+        Initiates Google OAuth login for customers.
+
+        This endpoint redirects the user to Google's OAuth consent screen.
+
+        Important: This endpoint uses a browser redirect flow and cannot be
+        reliably tested using Swagger UI's "Try it out" feature.
+
+        To test Google login, open this URL directly in a browser:
+
+        Initiates Google OAuth login for customers.
+
+        To test Google login, open:
+
+        <a href="http://localhost:5000/api/v1/auth/google" target="_blank">
+          http://localhost:5000/api/v1/auth/google
+        </a>
+
+        <a href="https://fixflow-server.vercel.app/api/v1/auth/google" target="_blank">
+          https://fixflow-server.vercel.app/api/v1/auth/google
+        </a>
+
+
+        After successful authentication, Google automatically redirects the
+        user to the callback endpoint.
+      operationId: googleLogin
+      responses:
+        '302':
+          description: Redirect to Google OAuth login page
+        '500':
+          description: Internal server error
+  /auth/google/callback:
+    get:
+      tags:
+        - Auth
+      summary: Google OAuth callback
+      description: |
+        Handles the callback from Google after successful authentication.
+
+        Google automatically calls this endpoint with an authorization code.
+
+        Important: Do not manually test this endpoint with a custom code.
+        Start the OAuth flow from /auth/google instead.
+      operationId: googleCallback
+      parameters:
+        - name: code
+          in: query
+          required: false
+          description: Authorization code automatically provided by Google
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Google login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Google login successful
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                        example: Muhammad Omar Faruk
+                      email:
+                        type: string
+                        format: email
+                        example: omar@example.com
+                      googleId:
+                        type: string
+                        example: '101458028521893356774'
+                      authProvider:
+                        type: string
+                        enum:
+                          - GOOGLE
+                        example: GOOGLE
+                      emailVerified:
+                        type: boolean
+                        example: true
+                      role:
+                        type: string
+                        enum:
+                          - CUSTOMER
+                        example: CUSTOMER
+                      imageUrl:
+                        type: string
+                        format: uri
+        '400':
+          description: Google authorization code is required
+        '401':
+          description: Google authentication failed
+        '403':
+          description: Google login is only available for customers
+        '500':
+          description: Internal server error
+  /users/me:
+    get:
+      tags:
+        - User
+      summary: Get current user profile
+      description: |
+        Returns the profile information of the currently authenticated user. If the user is a technician, the technician profile is also included.
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: User retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                      email:
+                        type: string
+                        format: email
+                      phone:
+                        type: string
+                        nullable: true
+                      address:
+                        type: string
+                        nullable: true
+                      city:
+                        type: string
+                        nullable: true
+                      area:
+                        type: string
+                        nullable: true
+                      role:
+                        type: string
+                        enum:
+                          - CUSTOMER
+                          - TECHNICIAN
+                          - ADMIN
+                      imageUrl:
+                        type: string
+                      technicianProfile:
+                        type: object
+                        nullable: true
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+    patch:
+      tags:
+        - User
+      summary: Update current user profile
+      description: |
+        Updates the profile information of the currently authenticated user. Users can update their name, phone, address, city, and area.
+      operationId: updateCurrentUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                  example: Muhammad Omar Faruk
+                phone:
+                  type: string
+                  minLength: 10
+                  maxLength: 20
+                  example: '01700000000'
+                address:
+                  type: string
+                  maxLength: 255
+                  example: Mirpur, Dhaka, Bangladesh
+                city:
+                  type: string
+                  maxLength: 100
+                  example: Dhaka
+                area:
+                  type: string
+                  maxLength: 100
+                  example: Mirpur
+      responses:
+        '200':
+          description: User profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: User profile updated successfully
+                  data:
+                    type: object
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+  /users/me/image:
+    patch:
+      tags:
+        - User
+      summary: Update profile image
+      description: |
+        Uploads and updates the profile image of the currently authenticated user. The image should be sent as multipart/form-data.
+      operationId: updateProfileImage
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Profile image file
+      responses:
+        '200':
+          description: Profile image updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Profile image updated successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                      email:
+                        type: string
+                        format: email
+                      imageUrl:
+                        type: string
+                        format: uri
+        '400':
+          description: Invalid image or validation error
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+  /service-requests:
+    post:
+      tags:
+        - Customer
+      summary: Create a service request
+      description: |
+        Allows an authenticated customer to create a new service request. The customer ID is automatically taken from the authenticated user. The initial request status is set to PENDING.
+      operationId: createServiceRequest
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+                - address
+                - categoryId
+              properties:
+                title:
+                  type: string
+                  minLength: 3
+                  maxLength: 200
+                  example: AC not cooling
+                description:
+                  type: string
+                  minLength: 10
+                  maxLength: 2000
+                  example: My AC is running but it is not cooling properly.
+                address:
+                  type: string
+                  minLength: 5
+                  maxLength: 255
+                  example: House 12, Road 5, Mirpur, Dhaka
+                city:
+                  type: string
+                  maxLength: 100
+                  example: Dhaka
+                area:
+                  type: string
+                  maxLength: 100
+                  example: Mirpur
+                scheduledAt:
+                  type: string
+                  format: date-time
+                  example: '2026-09-10T10:00:00.000Z'
+                estimatedPrice:
+                  type: number
+                  format: double
+                  minimum: 0
+                  example: 1000
+                categoryId:
+                  type: string
+                  format: uuid
+                  example: 0f2a64c8-638b-4b48-94b1-8e031cbdb27f
+      responses:
+        '201':
+          description: Service request created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 201
+                  message:
+                    type: string
+                    example: Service request created successfully
+                  data:
+                    type: object
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+        '403':
+          description: Only customers can create service requests
+        '404':
+          description: Service category not found
+        '500':
+          description: Internal server error
+    get:
+      tags:
+        - Customer
+      summary: Get my service requests
+      description: |
+        Retrieves all non-deleted service requests created by the authenticated customer. Supports pagination, status filtering, search, and sorting.
+      operationId: getMyServiceRequests
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: limit
+          in: query
+          required: false
+          description: Number of service requests per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          example: 10
+        - name: status
+          in: query
+          required: false
+          description: Filter service requests by status
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - ACCEPTED
+              - ASSIGNED
+              - IN_PROGRESS
+              - COMPLETED
+              - CANCELLED
+          example: PENDING
+        - name: search
+          in: query
+          required: false
+          description: Search by title, description, address, city or area
+          schema:
+            type: string
+            maxLength: 100
+          example: AC
+        - name: sortBy
+          in: query
+          required: false
+          description: Field used to sort service requests
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - scheduledAt
+              - estimatedPrice
+              - finalPrice
+            default: createdAt
+          example: createdAt
+        - name: sortOrder
+          in: query
+          required: false
+          description: Sort direction
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          example: desc
+      responses:
+        '200':
+          description: Service requests retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Service requests retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  meta:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+                      total:
+                        type: integer
+                        example: 2
+                      totalPages:
+                        type: integer
+                        example: 1
+        '400':
+          description: Invalid query parameters
+        '401':
+          description: Unauthorized
+        '403':
+          description: Only customers can access their service requests
+        '500':
+          description: Internal server error
+  /service-requests/{id}:
+    get:
+      tags:
+        - Customer
+      summary: Get my service request details
+      description: |
+        Retrieves detailed information about a specific service request belonging to the authenticated customer.
+      operationId: getMyServiceRequestById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the service request
+          schema:
+            type: string
+            format: uuid
+          example: 4dee7d9d-4293-407a-8a00-cccb1d363b45
+      responses:
+        '200':
+          description: Service request retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Service request retrieved successfully
+                  data:
+                    type: object
+        '400':
+          description: Invalid service request ID
+        '401':
+          description: Unauthorized
+        '403':
+          description: Only customers can access this endpoint
+        '404':
+          description: Service request not found
+        '500':
+          description: Internal server error
+    patch:
+      tags:
+        - Customer
+      summary: Update my service request
+      description: |
+        Updates an existing service request created by the authenticated customer. Only requests with PENDING status can be updated.
+      operationId: updateMyServiceRequest
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the service request
+          schema:
+            type: string
+            format: uuid
+          example: 4dee7d9d-4293-407a-8a00-cccb1d363b45
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 3
+                  maxLength: 200
+                  example: AC cooling problem
+                description:
+                  type: string
+                  minLength: 10
+                  maxLength: 2000
+                  example: The AC is running but the room is not cooling properly.
+                address:
+                  type: string
+                  minLength: 5
+                  maxLength: 255
+                  example: House 15, Road 7, Mirpur
+                city:
+                  type: string
+                  maxLength: 100
+                  example: Dhaka
+                area:
+                  type: string
+                  maxLength: 100
+                  example: Mirpur
+                scheduledAt:
+                  type: string
+                  format: date-time
+                  example: '2026-09-12T10:00:00.000Z'
+                estimatedPrice:
+                  type: number
+                  format: double
+                  minimum: 0
+                  exclusiveMinimum: true
+                  example: 1200
+                categoryId:
+                  type: string
+                  format: uuid
+                  example: 6baa9761-4e18-45d5-b185-3d75080bceb4
+      responses:
+        '200':
+          description: Service request updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Service request updated successfully
+                  data:
+                    type: object
+        '400':
+          description: Invalid request or service request is not pending
+        '401':
+          description: Unauthorized
+        '403':
+          description: Only customers can update service requests
+        '404':
+          description: Service request or category not found
+        '500':
+          description: Internal server error
+  /service-requests/{id}/cancel:
+    patch:
+      tags:
+        - Customer
+      summary: Cancel my service request
+      description: |
+        Cancels a service request created by the authenticated customer. Only PENDING service requests can be cancelled. Cancellation changes the request status to CANCELLED without soft deleting the record.
+      operationId: cancelMyServiceRequest
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the service request
+          schema:
+            type: string
+            format: uuid
+          example: 4dee7d9d-4293-407a-8a00-cccb1d363b45
+      responses:
+        '200':
+          description: Service request cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Service request cancelled successfully
+                  data:
+                    type: object
+        '400':
+          description: Service request is not in PENDING status
+        '401':
+          description: Unauthorized
+        '403':
+          description: Only customers can cancel service requests
+        '404':
+          description: Service request not found
+        '500':
+          description: Internal server error
+  /technicians/me/profile:
+    patch:
+      tags:
+        - Technician
+      summary: Update technician profile
+      description: |
+        Allows the authenticated technician to create or update their professional profile information.
+      operationId: updateTechnicianProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bio:
+                  type: string
+                  maxLength: 1000
+                  example: Professional AC and electrical technician
+                experienceYears:
+                  type: integer
+                  minimum: 0
+                  maximum: 50
+                  example: 5
+                skills:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - AC Repair
+                    - Electrical Wiring
+                    - AC Installation
+                hourlyRate:
+                  type: number
+                  format: double
+                  minimum: 0
+                  example: 500
+      responses:
+        '200':
+          description: Technician profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Technician profile updated successfully
+                  data:
+                    type: object
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+        '403':
+          description: Only technicians can update technician profile
+        '404':
+          description: Technician profile or user not found
+        '500':
+          description: Internal server error
+  /technicians/{technicianId}/approve:
+    patch:
+      tags:
+        - Admin
+      summary: Approve a technician
+      description: Admin can approve a technician so the technician can receive service assignments.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: technicianId
+          required: true
+          description: User ID of the technician
+          schema:
+            type: string
+            format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+      responses:
+        '200':
+          description: Technician approved successfully
           content:
             application/json:
               schema:
@@ -52,24 +1143,1701 @@ paths:
                     example: true
                   message:
                     type: string
-                    example: User registered successfully
+                    example: Technician approved successfully
                   data:
                     type: object
                     properties:
                       id:
                         type: string
-                        example: 550e8400-e29b-41d4-a716-446655440000
-                      name:
+                        format: uuid
+                        example: 987e6543-e21b-12d3-a456-426614174111
+                      userId:
                         type: string
-                        example: Muhammad Omar Faruk
-                      email:
+                        format: uuid
+                        example: 123e4567-e89b-12d3-a456-426614174000
+                      bio:
                         type: string
-                        example: omar@example.com
-                      role:
+                        nullable: true
+                        example: Experienced AC technician
+                      experienceYears:
+                        type: integer
+                        example: 5
+                      skills:
+                        type: array
+                        items:
+                          type: string
+                        example:
+                          - AC Repair
+                          - Electrical
+                      hourlyRate:
                         type: string
-                        example: CUSTOMER
+                        nullable: true
+                        example: '500.00'
+                      status:
+                        type: string
+                        enum:
+                          - AVAILABLE
+                          - BUSY
+                          - OFFLINE
+                        example: AVAILABLE
+                      averageRating:
+                        type: number
+                        format: float
+                        example: 0
+                      totalJobs:
+                        type: integer
+                        example: 0
+                      isApproved:
+                        type: boolean
+                        example: true
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: '2026-09-07T10:30:00.000Z'
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: '2026-09-07T10:35:00.000Z'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Admin access required
+        '404':
+          description: Technician not found
+        '409':
+          description: Technician is already approved
+        '500':
+          description: Internal server error
+  /service-requests/{id}/accept:
+    patch:
+      tags:
+        - Technician
+      summary: Accept an assigned service request
+      description: |
+        Allows the assigned technician to accept a service request. The service request must have ASSIGNED status. Once accepted, the status changes from ASSIGNED to ACCEPTED.
+      operationId: acceptServiceRequest
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the service request
+          schema:
+            type: string
+            format: uuid
+          example: 4dee7d9d-4293-407a-8a00-cccb1d363b45
+      responses:
+        '200':
+          description: Service request accepted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Service request accepted successfully
+                  data:
+                    type: object
+        '400':
+          description: Service request is not in ASSIGNED status
+        '401':
+          description: Unauthorized
+        '403':
+          description: |
+            Only technicians can access this endpoint, or the authenticated technician is not assigned to this service request.
+        '404':
+          description: Service request not found
+        '500':
+          description: Internal server error
+  /service-requests/{id}/start:
+    patch:
+      tags:
+        - Technician
+      summary: Start an accepted service request
+      description: |
+        Allows the assigned technician to start an accepted service request. The service request must have ACCEPTED status. Once started, the status changes from ACCEPTED to IN_PROGRESS.
+      operationId: startServiceRequest
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the service request
+          schema:
+            type: string
+            format: uuid
+          example: 4dee7d9d-4293-407a-8a00-cccb1d363b45
+      responses:
+        '200':
+          description: Service request started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Service request started successfully
+                  data:
+                    type: object
+        '400':
+          description: Service request is not in ACCEPTED status
+        '401':
+          description: Unauthorized
+        '403':
+          description: |
+            Only technicians can access this endpoint, or the authenticated technician is not assigned to this service request.
+        '404':
+          description: Service request not found
+        '500':
+          description: Internal server error
+  /service-requests/{id}/complete:
+    patch:
+      tags:
+        - Technician
+      summary: Complete an in-progress service request
+      description: |
+        Allows the assigned technician to complete an in-progress service request and set the final service price. The service request must have IN_PROGRESS status. Once completed, the status changes from IN_PROGRESS to COMPLETED.
+      operationId: completeServiceRequest
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the service request
+          schema:
+            type: string
+            format: uuid
+          example: 4dee7d9d-4293-407a-8a00-cccb1d363b45
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - finalPrice
+              properties:
+                finalPrice:
+                  type: number
+                  format: double
+                  exclusiveMinimum: true
+                  minimum: 0
+                  description: Final price of the completed service
+                  example: 1500
+      responses:
+        '200':
+          description: Service request completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Service request completed successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      title:
+                        type: string
+                        example: AC not cooling
+                      description:
+                        type: string
+                        example: My AC is running but it is not cooling properly.
+                      address:
+                        type: string
+                        example: House 12, Road 5, Mirpur
+                      city:
+                        type: string
+                        nullable: true
+                        example: Dhaka
+                      area:
+                        type: string
+                        nullable: true
+                        example: Mirpur
+                      scheduledAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: '2026-09-10T10:00:00.000Z'
+                      estimatedPrice:
+                        type: string
+                        nullable: true
+                        example: '1000'
+                      finalPrice:
+                        type: string
+                        nullable: true
+                        example: '1500'
+                      status:
+                        type: string
+                        enum:
+                          - PENDING
+                          - ACCEPTED
+                          - ASSIGNED
+                          - IN_PROGRESS
+                          - COMPLETED
+                          - CANCELLED
+                        example: COMPLETED
+                      customerId:
+                        type: string
+                        format: uuid
+                      technicianId:
+                        type: string
+                        format: uuid
+                      categoryId:
+                        type: string
+                        format: uuid
+                      isDeleted:
+                        type: boolean
+                        example: false
+                      deletedAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: null
+                      createdAt:
+                        type: string
+                        format: date-time
+                      updatedAt:
+                        type: string
+                        format: date-time
+        '400':
+          description: |
+            Invalid request or service request is not in IN_PROGRESS status.
+        '401':
+          description: Unauthorized
+        '403':
+          description: |
+            Only technicians can access this endpoint, or the authenticated technician is not assigned to this service request.
+        '404':
+          description: Service request not found
+        '500':
+          description: Internal server error
+  /service-requests/admin:
+    get:
+      tags:
+        - Admin
+      summary: Get all service requests
+      description: |
+        Retrieves all non-deleted service requests from all customers. This endpoint is accessible only to authenticated administrators. Supports pagination, status filtering, search, city and area filtering, and sorting.
+      operationId: getAllServiceRequests
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: limit
+          in: query
+          required: false
+          description: Number of service requests per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          example: 10
+        - name: status
+          in: query
+          required: false
+          description: Filter by service request status
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - ACCEPTED
+              - ASSIGNED
+              - IN_PROGRESS
+              - COMPLETED
+              - CANCELLED
+          example: PENDING
+        - name: search
+          in: query
+          required: false
+          description: Search by title, description, or address
+          schema:
+            type: string
+            maxLength: 100
+          example: AC
+        - name: city
+          in: query
+          required: false
+          description: Filter by city
+          schema:
+            type: string
+            maxLength: 100
+          example: Dhaka
+        - name: area
+          in: query
+          required: false
+          description: Filter by area
+          schema:
+            type: string
+            maxLength: 100
+          example: Mirpur
+        - name: sortBy
+          in: query
+          required: false
+          description: Field used for sorting
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - scheduledAt
+              - estimatedPrice
+              - finalPrice
+            default: createdAt
+          example: createdAt
+        - name: sortOrder
+          in: query
+          required: false
+          description: Sorting direction
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          example: desc
+      responses:
+        '200':
+          description: Service requests retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Service requests retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  meta:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+                      total:
+                        type: integer
+                        example: 25
+                      totalPages:
+                        type: integer
+                        example: 3
+        '400':
+          description: Invalid query parameters
+        '401':
+          description: Unauthorized
+        '403':
+          description: Only administrators can access this endpoint
+        '500':
+          description: Internal server error
+  /service-requests/{id}/assign:
+    patch:
+      tags:
+        - Admin
+      summary: Assign a technician to a service request
+      description: |
+        Assigns an approved and available technician to a pending service request. Only authenticated administrators can assign technicians. Once assigned, the service request status changes from PENDING to ASSIGNED.
+      operationId: assignTechnician
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the service request
+          schema:
+            type: string
+            format: uuid
+          example: 4dee7d9d-4293-407a-8a00-cccb1d363b45
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - technicianId
+              properties:
+                technicianId:
+                  type: string
+                  format: uuid
+                  description: Unique ID of the technician
+                  example: 7a1d8d7e-9b15-4e93-a7c8-2d9f4c6a1234
+      responses:
+        '200':
+          description: Technician assigned successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Technician assigned successfully
+                  data:
+                    type: object
+        '400':
+          description: |
+            Invalid request. The service request must be PENDING and the technician must be available.
+        '401':
+          description: Unauthorized
+        '403':
+          description: |
+            Only administrators can assign technicians, or the selected technician is not approved.
+        '404':
+          description: Service request or technician not found
+        '500':
+          description: Internal server error
+  /categories:
+    get:
+      tags:
+        - Category
+      summary: Get all service categories
+      description: |
+        Retrieves all active and non-deleted service categories. This endpoint is publicly accessible.
+      operationId: getAllCategories
+      responses:
+        '200':
+          description: Categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Categories retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                          example: AC Repair
+                        description:
+                          type: string
+                          nullable: true
+                          example: Air conditioner repair and maintenance services.
+                        imageUrl:
+                          type: string
+                          example: ''
+                        isActive:
+                          type: boolean
+                          example: true
+                        isDeleted:
+                          type: boolean
+                          example: false
+                        deletedAt:
+                          type: string
+                          format: date-time
+                          nullable: true
+                        createdAt:
+                          type: string
+                          format: date-time
+                        updatedAt:
+                          type: string
+                          format: date-time
+        '500':
+          description: Internal server error
+    post:
+      tags:
+        - Admin
+      summary: Create a service category
+      description: |
+        Creates a new service category. Only authenticated administrators can create service categories.
+      operationId: createCategory
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                  example: AC Repair
+                description:
+                  type: string
+                  maxLength: 500
+                  example: Air conditioner repair, maintenance, and installation services.
+                imageUrl:
+                  type: string
+                  format: uri
+                  example: https://example.com/ac.jpg
+      responses:
+        '201':
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 201
+                  message:
+                    type: string
+                    example: Category created successfully
+                  data:
+                    type: object
         '400':
           description: Validation error
+        '401':
+          description: Unauthorized
+        '403':
+          description: Only administrators can create categories
+        '409':
+          description: Category already exists
+        '500':
+          description: Internal server error
+  /categories/{id}:
+    get:
+      tags:
+        - Category
+      summary: Get category by ID
+      description: |
+        Retrieves a single active and non-deleted service category using its unique ID. This endpoint is publicly accessible.
+      operationId: getCategoryById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the service category
+          schema:
+            type: string
+            format: uuid
+          example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+      responses:
+        '200':
+          description: Category retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Category retrieved successfully
+                  data:
+                    type: object
+        '400':
+          description: Invalid category ID
+        '404':
+          description: Category not found
+        '500':
+          description: Internal server error
+    patch:
+      tags:
+        - Admin
+      summary: Update a service category
+      description: |
+        Updates an existing service category. Only authenticated administrators can update a category.
+      operationId: updateCategory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the service category
+          schema:
+            type: string
+            format: uuid
+          example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                  example: AC & Cooling Repair
+                description:
+                  type: string
+                  maxLength: 500
+                  example: AC repair, servicing and installation services.
+                imageUrl:
+                  type: string
+                  format: uri
+                  example: https://example.com/ac.jpg
+                isActive:
+                  type: boolean
+                  example: true
+      responses:
+        '200':
+          description: Category updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Category updated successfully
+                  data:
+                    type: object
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+        '403':
+          description: Only administrators can update categories
+        '404':
+          description: Category not found
+        '409':
+          description: Category with the same name already exists
+        '500':
+          description: Internal server error
+    delete:
+      tags:
+        - Admin
+      summary: Delete a service category
+      description: |
+        Soft deletes an existing service category. The category is not permanently removed from the database. Only authenticated administrators can delete a category.
+      operationId: deleteCategory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the service category
+          schema:
+            type: string
+            format: uuid
+          example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+      responses:
+        '200':
+          description: Category deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Category deleted successfully
+                  data:
+                    type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Only administrators can delete categories
+        '404':
+          description: Category not found
+        '500':
+          description: Internal server error
+  /payments/create-checkout-session:
+    post:
+      tags:
+        - Payment
+      summary: Create Stripe Checkout Session
+      description: |
+        Creates a Stripe Checkout Session for a completed service request. Only authenticated customers can create a payment. The service request must belong to the authenticated customer, have COMPLETED status, and have a final price.
+      operationId: createCheckoutSession
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - serviceRequestId
+              properties:
+                serviceRequestId:
+                  type: string
+                  format: uuid
+                  description: Unique ID of the completed service request
+                  example: 4dee7d9d-4293-407a-8a00-cccb1d363b45
+      responses:
+        '201':
+          description: Checkout session created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 201
+                  message:
+                    type: string
+                    example: Checkout session created successfully
+                  data:
+                    type: object
+                    properties:
+                      paymentId:
+                        type: string
+                        format: uuid
+                        example: 7b9c8f1a-2c4d-4e6f-8a1b-9d2e3f4a5b6c
+                      checkoutUrl:
+                        type: string
+                        format: uri
+                        description: Stripe Checkout URL
+                        example: https://checkout.stripe.com/c/pay/cs_test_a1b2c3d4
+                      amount:
+                        type: number
+                        format: double
+                        description: Payment amount in BDT
+                        example: 1500
+                      currency:
+                        type: string
+                        example: BDT
+        '400':
+          description: |
+            Payment cannot be created because the service request is not completed or the final price is unavailable.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  statusCode:
+                    type: integer
+                    example: 400
+                  message:
+                    type: string
+              examples:
+                serviceNotCompleted:
+                  summary: Service request is not completed
+                  value:
+                    success: false
+                    statusCode: 400
+                    message: Payment is only available for completed service requests
+                finalPriceMissing:
+                  summary: Final price is not available
+                  value:
+                    success: false
+                    statusCode: 400
+                    message: Final price is not available
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  statusCode:
+                    type: integer
+                    example: 401
+                  message:
+                    type: string
+                    example: Unauthorized
+        '403':
+          description: Only customers can create payments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  statusCode:
+                    type: integer
+                    example: 403
+                  message:
+                    type: string
+                    example: Forbidden
+        '404':
+          description: Service request not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  statusCode:
+                    type: integer
+                    example: 404
+                  message:
+                    type: string
+                    example: Service request not found
+        '409':
+          description: Payment already completed or payment is in progress
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  statusCode:
+                    type: integer
+                    example: 409
+                  message:
+                    type: string
+              examples:
+                alreadyPaid:
+                  summary: Payment already completed
+                  value:
+                    success: false
+                    statusCode: 409
+                    message: Payment has already been completed
+                paymentPending:
+                  summary: Payment already in progress
+                  value:
+                    success: false
+                    statusCode: 409
+                    message: Payment is already in progress
+        '500':
+          description: Internal server error
+  /payments/stripe/webhook:
+    post:
+      tags:
+        - Payment
+      summary: Stripe Webhook
+      description: |
+        Receives webhook events from Stripe and updates the payment status. Stripe sends events to this endpoint after payment activities. The Stripe-Signature header is used to verify the authenticity of the webhook request.
+        This endpoint must receive the request body as raw JSON because Stripe webhook signature verification requires the original request payload.
+      operationId: handleStripeWebhook
+      parameters:
+        - name: stripe-signature
+          in: header
+          required: true
+          description: |
+            Stripe webhook signature used to verify the webhook request.
+          schema:
+            type: string
+          example: t=1750000000,v1=abcdef1234567890
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              id: evt_1Example123456
+              object: event
+              type: checkout.session.completed
+              data:
+                object:
+                  id: cs_test_example123
+                  object: checkout.session
+                  metadata:
+                    serviceRequestId: 4dee7d9d-4293-407a-8a00-cccb1d363b45
+                    customerId: 7b9c8f1a-2c4d-4e6f-8a1b-9d2e3f4a5b6c
+                  payment_intent: pi_example123456
+      responses:
+        '200':
+          description: Webhook received successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+                    example: true
+              example:
+                received: true
+        '400':
+          description: Invalid Stripe webhook signature or payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  statusCode:
+                    type: integer
+                    example: 400
+                  message:
+                    type: string
+              examples:
+                missingSignature:
+                  summary: Stripe signature is missing
+                  value:
+                    success: false
+                    message: Stripe signature is missing
+                invalidSignature:
+                  summary: Invalid Stripe webhook signature
+                  value:
+                    success: false
+                    statusCode: 400
+                    message: Invalid Stripe webhook signature
+                missingServiceRequest:
+                  summary: Service request ID missing
+                  value:
+                    success: false
+                    statusCode: 400
+                    message: Service request ID missing from Stripe session
+        '404':
+          description: Payment not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  statusCode:
+                    type: integer
+                    example: 404
+                  message:
+                    type: string
+                    example: Payment not found
+        '500':
+          description: Internal server error
+  /payments/my-payments:
+    get:
+      tags:
+        - Payment
+      summary: Get my payments
+      description: Get authenticated customer's payment history
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - PAID
+              - FAILED
+              - CANCELLED
+              - REFUNDED
+      responses:
+        '200':
+          description: Payments retrieved successfully
+  /payments:
+    get:
+      tags:
+        - Payment
+      summary: Get all payments
+      description: Admin can view all customer payments with pagination and status filtering.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          required: false
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: limit
+          required: false
+          description: Number of payments per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - in: query
+          name: status
+          required: false
+          description: Filter payments by payment status
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - PAID
+              - FAILED
+              - CANCELLED
+              - REFUNDED
+      responses:
+        '200':
+          description: All payments retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: All payments retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      meta:
+                        type: object
+                        properties:
+                          page:
+                            type: integer
+                            example: 1
+                          limit:
+                            type: integer
+                            example: 10
+                          total:
+                            type: integer
+                            example: 25
+                          totalPages:
+                            type: integer
+                            example: 3
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                              example: 7f8c9d10-1234-4567-8901-abcdef123456
+                            amount:
+                              type: string
+                              example: '1500.00'
+                            currency:
+                              type: string
+                              example: BDT
+                            status:
+                              type: string
+                              enum:
+                                - PENDING
+                                - PAID
+                                - FAILED
+                                - CANCELLED
+                                - REFUNDED
+                              example: PAID
+                            method:
+                              type: string
+                              enum:
+                                - STRIPE
+                              example: STRIPE
+                            transactionId:
+                              type: string
+                              nullable: true
+                              example: pi_3ABC123XYZ
+                            stripeSessionId:
+                              type: string
+                              nullable: true
+                              example: cs_test_ABC123XYZ
+                            serviceRequestId:
+                              type: string
+                              format: uuid
+                              example: 123e4567-e89b-12d3-a456-426614174000
+                            customerId:
+                              type: string
+                              format: uuid
+                              example: 987e6543-e21b-12d3-a456-426614174111
+                            createdAt:
+                              type: string
+                              format: date-time
+                              example: '2026-09-07T10:30:00.000Z'
+                            updatedAt:
+                              type: string
+                              format: date-time
+                              example: '2026-09-07T10:35:00.000Z'
+                            customer:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  format: uuid
+                                  example: 987e6543-e21b-12d3-a456-426614174111
+                                name:
+                                  type: string
+                                  example: Test Customer
+                                email:
+                                  type: string
+                                  format: email
+                                  example: customer@fixflow.com
+                                phone:
+                                  type: string
+                                  nullable: true
+                                  example: '01712345678'
+                            serviceRequest:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  format: uuid
+                                  example: 123e4567-e89b-12d3-a456-426614174000
+                                title:
+                                  type: string
+                                  example: AC Repair
+                                status:
+                                  type: string
+                                  example: COMPLETED
+                                finalPrice:
+                                  type: string
+                                  example: '1500.00'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Admin access required
+        '500':
+          description: Internal server error
+  /reviews:
+    post:
+      tags:
+        - Customer
+      summary: Create a review
+      description: Customer can submit a review for a completed and paid service request.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - serviceRequestId
+                - rating
+              properties:
+                serviceRequestId:
+                  type: string
+                  format: uuid
+                  description: ID of the completed service request
+                  example: 123e4567-e89b-12d3-a456-426614174000
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  description: Rating given to the technician
+                  example: 5
+                comment:
+                  type: string
+                  maxLength: 1000
+                  nullable: true
+                  description: Optional review comment
+                  example: Excellent service. Very professional technician.
+      responses:
+        '201':
+          description: Review created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Review created successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: 987e6543-e21b-12d3-a456-426614174111
+                      rating:
+                        type: integer
+                        example: 5
+                      comment:
+                        type: string
+                        nullable: true
+                        example: Excellent service. Very professional technician.
+                      serviceRequestId:
+                        type: string
+                        format: uuid
+                        example: 123e4567-e89b-12d3-a456-426614174000
+                      reviewerId:
+                        type: string
+                        format: uuid
+                        example: 456e7890-e12b-34d5-a678-426614174222
+                      technicianId:
+                        type: string
+                        format: uuid
+                        example: 789e0123-e45b-67c8-a901-426614174333
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: '2026-09-07T08:00:00.000Z'
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: '2026-09-07T08:00:00.000Z'
+        '400':
+          description: Invalid request, service not completed, or payment not completed
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Customer access required
+        '404':
+          description: Service request or technician not found
+        '409':
+          description: Review has already been submitted
+        '500':
+          description: Internal server error
+  /audit-logs:
+    get:
+      tags:
+        - Admin
+      summary: Get all audit logs
+      description: Admin can view all system audit logs with pagination and filtering.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          required: false
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - in: query
+          name: limit
+          required: false
+          description: Number of audit logs per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          example: 10
+        - in: query
+          name: action
+          required: false
+          description: Filter audit logs by action
+          schema:
+            type: string
+          example: PAYMENT_COMPLETED
+        - in: query
+          name: entity
+          required: false
+          description: Filter audit logs by entity
+          schema:
+            type: string
+          example: Payment
+        - in: query
+          name: userId
+          required: false
+          description: Filter audit logs by user ID
+          schema:
+            type: string
+            format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+      responses:
+        '200':
+          description: Audit logs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Audit logs retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      meta:
+                        type: object
+                        properties:
+                          page:
+                            type: integer
+                            example: 1
+                          limit:
+                            type: integer
+                            example: 10
+                          total:
+                            type: integer
+                            example: 25
+                          totalPages:
+                            type: integer
+                            example: 3
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                              example: 987e6543-e21b-12d3-a456-426614174111
+                            action:
+                              type: string
+                              example: PAYMENT_COMPLETED
+                            entity:
+                              type: string
+                              example: Payment
+                            entityId:
+                              type: string
+                              format: uuid
+                              nullable: true
+                              example: 456e7890-e12b-34d5-a678-426614174222
+                            oldData:
+                              type: object
+                              nullable: true
+                              additionalProperties: true
+                              example:
+                                status: PENDING
+                            newData:
+                              type: object
+                              nullable: true
+                              additionalProperties: true
+                              example:
+                                status: PAID
+                                transactionId: pi_xxxxxxxxx
+                            ipAddress:
+                              type: string
+                              nullable: true
+                              example: 127.0.0.1
+                            userAgent:
+                              type: string
+                              nullable: true
+                              example: Mozilla/5.0
+                            createdAt:
+                              type: string
+                              format: date-time
+                              example: '2026-09-07T10:30:00.000Z'
+                            user:
+                              type: object
+                              nullable: true
+                              properties:
+                                id:
+                                  type: string
+                                  format: uuid
+                                  example: 123e4567-e89b-12d3-a456-426614174000
+                                name:
+                                  type: string
+                                  example: Test Admin
+                                email:
+                                  type: string
+                                  format: email
+                                  example: admin@fixflow.com
+                                role:
+                                  type: string
+                                  enum:
+                                    - CUSTOMER
+                                    - TECHNICIAN
+                                    - ADMIN
+                                  example: ADMIN
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Admin access required
+        '500':
+          description: Internal server error
+  /service-requests/technician/my-services:
+    get:
+      tags:
+        - Technician
+      summary: Get my assigned services
+      description: |
+        Allows an authenticated technician to retrieve all service requests assigned to the currently logged-in technician. Supports pagination, status filtering, and sorting.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          required: false
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - in: query
+          name: limit
+          required: false
+          description: Number of services per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          example: 10
+        - in: query
+          name: status
+          required: false
+          description: Filter services by status
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - ACCEPTED
+              - ASSIGNED
+              - IN_PROGRESS
+              - COMPLETED
+              - CANCELLED
+          example: ASSIGNED
+        - in: query
+          name: sortBy
+          required: false
+          description: Field used for sorting
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - scheduledAt
+            default: createdAt
+          example: scheduledAt
+        - in: query
+          name: sortOrder
+          required: false
+          description: Sorting direction
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          example: asc
+      responses:
+        '200':
+          description: Assigned services retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Assigned services retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      meta:
+                        type: object
+                        properties:
+                          page:
+                            type: integer
+                            example: 1
+                          limit:
+                            type: integer
+                            example: 10
+                          total:
+                            type: integer
+                            example: 2
+                          totalPages:
+                            type: integer
+                            example: 1
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                              example: 550e8400-e29b-41d4-a716-446655440000
+                            title:
+                              type: string
+                              example: AC Repair
+                            description:
+                              type: string
+                              example: AC is not cooling properly
+                            address:
+                              type: string
+                              example: Dhanmondi, Dhaka
+                            city:
+                              type: string
+                              nullable: true
+                              example: Dhaka
+                            area:
+                              type: string
+                              nullable: true
+                              example: Dhanmondi
+                            scheduledAt:
+                              type: string
+                              format: date-time
+                              nullable: true
+                              example: '2026-09-10T10:00:00.000Z'
+                            estimatedPrice:
+                              type: string
+                              nullable: true
+                              example: '1500'
+                            finalPrice:
+                              type: string
+                              nullable: true
+                              example: '1800'
+                            status:
+                              type: string
+                              enum:
+                                - PENDING
+                                - ACCEPTED
+                                - ASSIGNED
+                                - IN_PROGRESS
+                                - COMPLETED
+                                - CANCELLED
+                              example: ASSIGNED
+                            customerId:
+                              type: string
+                              format: uuid
+                              example: 650e8400-e29b-41d4-a716-446655440001
+                            technicianId:
+                              type: string
+                              format: uuid
+                              example: 750e8400-e29b-41d4-a716-446655440002
+                            categoryId:
+                              type: string
+                              format: uuid
+                              example: 850e8400-e29b-41d4-a716-446655440003
+                            createdAt:
+                              type: string
+                              format: date-time
+                              example: '2026-09-07T10:00:00.000Z'
+                            updatedAt:
+                              type: string
+                              format: date-time
+                              example: '2026-09-07T12:00:00.000Z'
+                            customer:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  format: uuid
+                                  example: 650e8400-e29b-41d4-a716-446655440001
+                                name:
+                                  type: string
+                                  example: Test Customer
+                                email:
+                                  type: string
+                                  format: email
+                                  example: customer@fixflow.com
+                                phone:
+                                  type: string
+                                  nullable: true
+                                  example: '01712345678'
+                                imageUrl:
+                                  type: string
+                                  example: ''
+                            category:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  format: uuid
+                                  example: 850e8400-e29b-41d4-a716-446655440003
+                                name:
+                                  type: string
+                                  example: AC Repair
+                                description:
+                                  type: string
+                                  nullable: true
+                                  example: Air conditioner repair service
+        '401':
+          description: Unauthorized - Authentication token is missing or invalid
           content:
             application/json:
               schema:
@@ -80,13 +2848,52 @@ paths:
                     example: false
                   message:
                     type: string
-                    example: Validation failed
+                    example: Unauthorized
                   errors:
                     type: array
                     items:
                       type: object
-        '409':
-          description: Email already exists
+        '403':
+          description: Forbidden - Only technicians can access this endpoint
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: You are not authorized to access this resource
+                  errors:
+                    type: array
+                    items:
+                      type: object
         '500':
           description: Internal server error
-components: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Internal Server Error
+                  errors:
+                    type: array
+                    items:
+                      type: object
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshTokenAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

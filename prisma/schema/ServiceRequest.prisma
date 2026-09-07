@@ -1,0 +1,42 @@
+model ServiceRequest {
+  id String @id @default(uuid())
+
+  title       String
+  description String
+
+  address String
+  city    String?
+  area    String?
+
+  scheduledAt DateTime?
+
+  estimatedPrice Decimal? @db.Decimal(10, 2)
+  finalPrice     Decimal? @db.Decimal(10, 2)
+
+  status ServiceRequestStatus @default(PENDING)
+
+  customerId   String
+  technicianId String?
+  categoryId   String
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer User @relation("CustomerRequests", fields: [customerId], references: [id], onDelete: Cascade)
+
+  technician User? @relation("TechnicianRequests", fields: [technicianId], references: [id], onDelete: SetNull)
+
+  category ServiceCategory @relation(fields: [categoryId], references: [id])
+
+  payment Payment?
+  review  Review?
+
+  @@index([customerId])
+  @@index([technicianId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([createdAt])
+}

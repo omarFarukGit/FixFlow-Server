@@ -24,11 +24,16 @@
   "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "@biomejs/biome": "2.5.11",
-    "@redocly/cli": "^2.49.1",
+    "@biomejs/biome": "^2.5.12",
+    "@redocly/cli": "^2.51.1",
+    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
+    "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.2.0",
     "@types/node": "^26.4.1",
+    "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.23.1",
     "@types/swagger-ui-express": "^4.1.8",
     "prisma": "^7.10.0",
@@ -40,12 +45,24 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.11.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
+    "ejs": "^6.0.1",
     "express": "^5.2.1",
+    "google-auth-library": "^11.0.2",
+    "http-status": "^2.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.3.0",
+    "nodemailer": "^9.1.1",
     "pg": "^8.23.0",
+    "redis": "^6.2.1",
+    "stripe": "^22.6.1",
     "swagger-ui-express": "^5.0.1",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.0",
+    "zod": "^4.5.4"
   },
   "overrides": {
     "tsup": {
@@ -57,5 +74,10 @@
     "@prisma/config": {
       "deepmerge-ts": "8.0.0"
     }
+  },
+  "allowScripts": {
+    "@prisma/engines@7.10.0": true,
+    "prisma@7.10.0": true,
+    "esbuild@0.28.2": true
   }
 }
