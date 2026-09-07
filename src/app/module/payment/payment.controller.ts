@@ -2,7 +2,10 @@ import httpStatus from "http-status";
 
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
-
+import type {
+  IGetAllPaymentsQuery,
+  IGetMyPaymentsQuery,
+} from "./payment.interface";
 import { PaymentService } from "./payment.service";
 
 const createCheckoutSession = catchAsync(async (req, res) => {
@@ -36,7 +39,38 @@ const handleStripeWebhook = catchAsync(async (req, res) => {
 
   return res.status(httpStatus.OK).json(result);
 });
+
+const getMyPayments = catchAsync(async (req, res) => {
+  const customerId = req.user?.userId as string;
+
+  const result = await PaymentService.getMyPayments(
+    customerId,
+    req.query as unknown as IGetMyPaymentsQuery,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Payments retrieved successfully",
+    data: result,
+  });
+});
+
+const getAllPayments = catchAsync(async (req, res) => {
+  const result = await PaymentService.getAllPayments(
+    req.query as unknown as IGetAllPaymentsQuery,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "All payments retrieved successfully",
+    data: result,
+  });
+});
 export const PaymentController = {
   createCheckoutSession,
   handleStripeWebhook,
+  getMyPayments,
+  getAllPayments,
 };

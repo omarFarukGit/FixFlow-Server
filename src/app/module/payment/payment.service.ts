@@ -4,7 +4,11 @@ import config from "../../config";
 import { prisma } from "../../lib/prisma";
 import { stripe } from "../../lib/stripe";
 import { AppError } from "../../utils/AppError";
-import type { ICreateCheckoutSessionPayload } from "./payment.interface";
+import type {
+  ICreateCheckoutSessionPayload,
+  IGetAllPaymentsQuery,
+  IGetMyPaymentsQuery,
+} from "./payment.interface";
 
 const createCheckoutSession = async (
   customerId: string,
@@ -182,7 +186,139 @@ const handleStripeWebhook = async (rawBody: Buffer, signature: string) => {
   };
 };
 
+const getMyPayments = async (
+  customerId: string,
+  query: IGetMyPaymentsQuery,
+) => {
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const { status } = query;
+
+  const skip = (page - 1) * limit;
+
+  const where = {
+    customerId,
+    ...(status && { status }),
+  };
+
+  const [payments, total] = await Promise.all([
+    prisma.payment.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        amount: true,
+        currency: true,
+        status: true,
+        method: true,
+        transactionId: true,
+        stripeSessionId: true,
+        serviceRequestId: true,
+        createdAt: true,
+        updatedAt: true,
+
+        serviceRequest: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            finalPrice: true,
+          },
+        },
+      },
+    }),
+
+    prisma.payment.count({
+      where,
+    }),
+  ]);
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    data: payments,
+  };
+};
+
+const getAllPayments = async (query: IGetAllPaymentsQuery) => {
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const { status } = query;
+
+  const skip = (page - 1) * limit;
+
+  const where = {
+    ...(status && { status }),
+  };
+
+  const [payments, total] = await Promise.all([
+    prisma.payment.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        amount: true,
+        currency: true,
+        status: true,
+        method: true,
+        transactionId: true,
+        stripeSessionId: true,
+        serviceRequestId: true,
+        customerId: true,
+        createdAt: true,
+        updatedAt: true,
+
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+
+        serviceRequest: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            finalPrice: true,
+          },
+        },
+      },
+    }),
+
+    prisma.payment.count({
+      where,
+    }),
+  ]);
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    data: payments,
+  };
+};
+
 export const PaymentService = {
   createCheckoutSession,
   handleStripeWebhook,
+  getMyPayments,
+  getAllPayments,
 };

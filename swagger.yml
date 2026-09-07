@@ -2079,6 +2079,204 @@ paths:
                     example: Payment not found
         '500':
           description: Internal server error
+  /payments/my-payments:
+    get:
+      tags:
+        - Payment
+      summary: Get my payments
+      description: Get authenticated customer's payment history
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - PAID
+              - FAILED
+              - CANCELLED
+              - REFUNDED
+      responses:
+        '200':
+          description: Payments retrieved successfully
+  /payments:
+    get:
+      tags:
+        - Payment
+      summary: Get all payments
+      description: Admin can view all customer payments with pagination and status filtering.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          required: false
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: limit
+          required: false
+          description: Number of payments per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - in: query
+          name: status
+          required: false
+          description: Filter payments by payment status
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - PAID
+              - FAILED
+              - CANCELLED
+              - REFUNDED
+      responses:
+        '200':
+          description: All payments retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: All payments retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      meta:
+                        type: object
+                        properties:
+                          page:
+                            type: integer
+                            example: 1
+                          limit:
+                            type: integer
+                            example: 10
+                          total:
+                            type: integer
+                            example: 25
+                          totalPages:
+                            type: integer
+                            example: 3
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                              example: 7f8c9d10-1234-4567-8901-abcdef123456
+                            amount:
+                              type: string
+                              example: '1500.00'
+                            currency:
+                              type: string
+                              example: BDT
+                            status:
+                              type: string
+                              enum:
+                                - PENDING
+                                - PAID
+                                - FAILED
+                                - CANCELLED
+                                - REFUNDED
+                              example: PAID
+                            method:
+                              type: string
+                              enum:
+                                - STRIPE
+                              example: STRIPE
+                            transactionId:
+                              type: string
+                              nullable: true
+                              example: pi_3ABC123XYZ
+                            stripeSessionId:
+                              type: string
+                              nullable: true
+                              example: cs_test_ABC123XYZ
+                            serviceRequestId:
+                              type: string
+                              format: uuid
+                              example: 123e4567-e89b-12d3-a456-426614174000
+                            customerId:
+                              type: string
+                              format: uuid
+                              example: 987e6543-e21b-12d3-a456-426614174111
+                            createdAt:
+                              type: string
+                              format: date-time
+                              example: '2026-09-07T10:30:00.000Z'
+                            updatedAt:
+                              type: string
+                              format: date-time
+                              example: '2026-09-07T10:35:00.000Z'
+                            customer:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  format: uuid
+                                  example: 987e6543-e21b-12d3-a456-426614174111
+                                name:
+                                  type: string
+                                  example: Test Customer
+                                email:
+                                  type: string
+                                  format: email
+                                  example: customer@fixflow.com
+                                phone:
+                                  type: string
+                                  nullable: true
+                                  example: '01712345678'
+                            serviceRequest:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  format: uuid
+                                  example: 123e4567-e89b-12d3-a456-426614174000
+                                title:
+                                  type: string
+                                  example: AC Repair
+                                status:
+                                  type: string
+                                  example: COMPLETED
+                                finalPrice:
+                                  type: string
+                                  example: '1500.00'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Admin access required
+        '500':
+          description: Internal server error
 components:
   securitySchemes:
     bearerAuth:
