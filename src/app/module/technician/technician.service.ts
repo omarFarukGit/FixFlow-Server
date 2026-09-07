@@ -1,8 +1,8 @@
 import httpStatus from "http-status";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
-import type { IUpdateTechnicianProfilePayload } from "./technician.interface";
 import { AuditLogService } from "../audit-log/audit-log.service";
+import type { IUpdateTechnicianProfilePayload } from "./technician.interface";
 
 const updateMyProfile = async (
   userId: string,
