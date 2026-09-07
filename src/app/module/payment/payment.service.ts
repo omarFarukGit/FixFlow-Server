@@ -4,6 +4,7 @@ import config from "../../config";
 import { prisma } from "../../lib/prisma";
 import { stripe } from "../../lib/stripe";
 import { AppError } from "../../utils/AppError";
+import { AuditLogService } from "../audit-log/audit-log.service";
 import type {
   ICreateCheckoutSessionPayload,
   IGetAllPaymentsQuery,
@@ -167,16 +168,36 @@ const handleStripeWebhook = async (rawBody: Buffer, signature: string) => {
       };
     }
 
-    await prisma.payment.update({
+    const transactionId =
+      typeof session.payment_intent === "string"
+        ? session.payment_intent
+        : null;
+
+    // Update payment
+    const paymentUpdate = await prisma.payment.update({
       where: {
         id: payment.id,
       },
       data: {
         status: "PAID",
-        transactionId:
-          typeof session.payment_intent === "string"
-            ? session.payment_intent
-            : null,
+        transactionId,
+      },
+    });
+
+    // Create audit log
+    await AuditLogService.createAuditLog({
+      userId: payment.customerId,
+      action: "PAYMENT_COMPLETED",
+      entity: "Payment",
+      entityId: payment.id,
+
+      oldData: {
+        status: payment.status,
+      },
+
+      newData: {
+        status: paymentUpdate.status,
+        transactionId: paymentUpdate.transactionId,
       },
     });
   }

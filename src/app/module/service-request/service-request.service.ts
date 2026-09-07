@@ -1,6 +1,7 @@
 import httpStatus from "http-status";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
+import { AuditLogService } from "../audit-log/audit-log.service";
 import type {
   IAssignTechnicianPayload,
   ICompleteServiceRequestPayload,
@@ -499,6 +500,7 @@ const getAllServiceRequests = async (query: IGetAllServiceRequestsQuery) => {
 };
 
 const assignTechnician = async (
+  adminId: string,
   serviceRequestId: string,
   payload: IAssignTechnicianPayload,
 ) => {
@@ -612,6 +614,22 @@ const assignTechnician = async (
     },
   });
 
+  // audit-logs create
+  await AuditLogService.createAuditLog({
+    userId: adminId,
+    action: "TECHNICIAN_ASSIGNED",
+    entity: "ServiceRequest",
+    entityId: serviceRequestId,
+    oldData: {
+      technicianId: serviceRequest.technicianId,
+      status: serviceRequest.status,
+    },
+    newData: {
+      technicianId: updatedServiceRequest.technicianId,
+      status: updatedServiceRequest.status,
+    },
+  });
+
   return updatedServiceRequest;
 };
 
@@ -702,6 +720,20 @@ const acceptServiceRequest = async (
     },
   });
 
+  //Technician accept audit-logs create
+  await AuditLogService.createAuditLog({
+    userId: technicianId,
+    action: "SERVICE_REQUEST_ACCEPTED",
+    entity: "ServiceRequest",
+    entityId: serviceRequestId,
+    oldData: {
+      status: serviceRequest.status,
+    },
+    newData: {
+      status: acceptedServiceRequest.status,
+    },
+  });
+
   return acceptedServiceRequest;
 };
 
@@ -779,6 +811,20 @@ const startServiceRequest = async (
           imageUrl: true,
         },
       },
+    },
+  });
+
+  //Technician start audit-logs create
+  await AuditLogService.createAuditLog({
+    userId: technicianId,
+    action: "SERVICE_REQUEST_STARTED",
+    entity: "ServiceRequest",
+    entityId: serviceRequestId,
+    oldData: {
+      status: serviceRequest.status,
+    },
+    newData: {
+      status: startedServiceRequest.status,
     },
   });
 
@@ -862,6 +908,22 @@ const completeServiceRequest = async (
           imageUrl: true,
         },
       },
+    },
+  });
+
+  //Technician complete audit logs create
+  await AuditLogService.createAuditLog({
+    userId: technicianId,
+    action: "SERVICE_REQUEST_COMPLETED",
+    entity: "ServiceRequest",
+    entityId: serviceRequestId,
+    oldData: {
+      status: serviceRequest.status,
+      finalPrice: serviceRequest.finalPrice,
+    },
+    newData: {
+      status: completedServiceRequest.status,
+      finalPrice: completedServiceRequest.finalPrice,
     },
   });
 

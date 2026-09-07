@@ -114,8 +114,10 @@ const getAllServiceRequests = catchAsync(async (req, res) => {
 
 const assignTechnician = catchAsync(async (req, res) => {
   const { id } = req.params;
+  const adminId = req.user?.userId as string;
 
   const result = await ServiceRequestService.assignTechnician(
+    adminId,
     id as string,
     req.body,
   );
