@@ -133,7 +133,8 @@ const handleStripeWebhook = async (rawBody: Buffer, signature: string) => {
       "Invalid Stripe webhook signature",
     );
   }
-
+  console.log("🔥 STRIPE WEBHOOK HIT");
+  console.log("🔥 EVENT TYPE:", event.type);
   // Payment successful
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;

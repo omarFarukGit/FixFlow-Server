@@ -6,6 +6,8 @@ info:
   version: 1.0.0
 
 servers:
+  - url: https://fixflow-server.vercel.app/api/v1
+    description: Live development server
   - url: http://localhost:5000/api/v1
     description: Local development server
 
@@ -234,7 +236,7 @@ paths:
                 email:
                   type: string
                   format: email
-                  example: muhammadabuhafiz@gmail.com
+                  example: customer@fixflow.com
 
                 password:
                   type: string
@@ -502,7 +504,18 @@ paths:
 
         To test Google login, open this URL directly in a browser:
 
-        http://localhost:5000/api/v1/auth/google
+        Initiates Google OAuth login for customers.
+
+        To test Google login, open:
+
+        <a href="http://localhost:5000/api/v1/auth/google" target="_blank">
+          http://localhost:5000/api/v1/auth/google
+        </a>
+
+        <a href="https://fixflow-server.vercel.app/api/v1/auth/google" target="_blank">
+          https://fixflow-server.vercel.app/api/v1/auth/google
+        </a>
+
 
         After successful authentication, Google automatically redirects the
         user to the callback endpoint.
@@ -969,7 +982,7 @@ paths:
                 categoryId:
                   type: string
                   format: uuid
-                  example: 4d3811e4-aeaf-40ac-8963-82edfefe19fc
+                  example: 0f2a64c8-638b-4b48-94b1-8e031cbdb27f
 
       responses:
         "201":

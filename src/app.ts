@@ -1,11 +1,8 @@
-import fs from "node:fs";
-import path from "node:path";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import type { Application, Request, Response } from "express";
 import express from "express";
 import swaggerUi from "swagger-ui-express";
-import YAML from "yaml";
 import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { notFound } from "./app/middleware/notFound";
 import { AuditLogRoutes } from "./app/module/audit-log/audit-log.route";
@@ -17,12 +14,17 @@ import { ReviewRoutes } from "./app/module/review/review.route";
 import { ServiceRequestRoutes } from "./app/module/service-request/service-request.route";
 import { technicianRoute } from "./app/module/technician/technician.route";
 import { userRoute } from "./app/module/user/user.route";
+import { swaggerDocument, swaggerHtml } from "./docs/swagger";
 
 const app: Application = express();
 
-const swaggerPath = path.join(process.cwd(), "swagger.yml");
-const file = fs.readFileSync(swaggerPath, "utf-8");
-const swaggerDocument = YAML.parse(file);
+app.get("/swagger.json", (_req: Request, res: Response) => {
+  res.json(swaggerDocument);
+});
+
+app.get("/api-docs", (_req: Request, res: Response) => {
+  res.type("html").send(swaggerHtml);
+});
 
 app.post(
   "/api/v1/payments/stripe/webhook",

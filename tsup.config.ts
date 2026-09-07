@@ -2,14 +2,25 @@ import { defineConfig } from "tsup";
 
 export default defineConfig({
   entry: ["src/server.ts"],
+
   format: ["esm"],
+
   target: "esnext",
+
   outDir: "dist",
+
   clean: true,
+
   bundle: true,
+
   splitting: false,
+
   sourcemap: true,
-  // Add banner to shim require() for CJS dependencies in ESM context
+
+  loader: {
+    ".yml": "text",
+  },
+
   banner: {
     js: `
       import { createRequire } from 'module';
