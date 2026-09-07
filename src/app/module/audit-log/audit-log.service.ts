@@ -5,7 +5,10 @@ import type {
 } from "./audit-log.interface";
 
 const getAuditLogs = async (query: IGetAuditLogsQuery) => {
-  const { page = 1, limit = 10, action, entity, userId } = query;
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+
+  const { action, entity, userId } = query;
 
   const skip = (page - 1) * limit;
 
