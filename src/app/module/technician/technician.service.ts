@@ -2,6 +2,7 @@ import httpStatus from "http-status";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import type { IUpdateTechnicianProfilePayload } from "./technician.interface";
+import { AuditLogService } from "../audit-log/audit-log.service";
 
 const updateMyProfile = async (
   userId: string,
@@ -32,7 +33,7 @@ const updateMyProfile = async (
   return profile;
 };
 
-const approveTechnician = async (technicianId: string) => {
+const approveTechnician = async (adminId: string, technicianId: string) => {
   const technician = await prisma.user.findFirst({
     where: {
       id: technicianId,
@@ -56,6 +57,10 @@ const approveTechnician = async (technicianId: string) => {
     throw new AppError(httpStatus.CONFLICT, "Technician is already approved");
   }
 
+  const oldData = {
+    isApproved: technician.technicianProfile.isApproved,
+  };
+
   const updatedProfile = await prisma.technicianProfile.update({
     where: {
       userId: technicianId,
@@ -63,19 +68,16 @@ const approveTechnician = async (technicianId: string) => {
     data: {
       isApproved: true,
     },
-    select: {
-      id: true,
-      userId: true,
-      bio: true,
-      experienceYears: true,
-      skills: true,
-      hourlyRate: true,
-      status: true,
-      averageRating: true,
-      totalJobs: true,
-      isApproved: true,
-      createdAt: true,
-      updatedAt: true,
+  });
+
+  await AuditLogService.createAuditLog({
+    userId: adminId,
+    action: "TECHNICIAN_APPROVED",
+    entity: "TechnicianProfile",
+    entityId: updatedProfile.id,
+    oldData,
+    newData: {
+      isApproved: updatedProfile.isApproved,
     },
   });
 

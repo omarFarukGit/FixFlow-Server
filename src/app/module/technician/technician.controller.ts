@@ -17,9 +17,11 @@ const updateMyProfile = catchAsync(async (req, res) => {
 });
 
 const approveTechnician = catchAsync(async (req, res) => {
+  const adminId = req.user?.userId as string;
   const { technicianId } = req.params;
 
   const result = await technicianService.approveTechnician(
+    adminId,
     technicianId as string,
   );
 
