@@ -1,4 +1,6 @@
+import type { UploadApiResponse } from "cloudinary";
 import httpStatus from "http-status";
+import { cloudinary } from "../../lib/cloudinary";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import type {
@@ -6,8 +8,11 @@ import type {
   IUpdateCategoryPayload,
 } from "./category.interface";
 
-const createCategory = async (payload: ICreateCategoryPayload) => {
-  const { name, description, imageUrl } = payload;
+const createCategory = async (
+  payload: ICreateCategoryPayload,
+  buffer: Buffer,
+) => {
+  const { name, description } = payload;
 
   const existingCategory = await prisma.serviceCategory.findUnique({
     where: {
@@ -19,11 +24,37 @@ const createCategory = async (payload: ICreateCategoryPayload) => {
     throw new AppError(httpStatus.CONFLICT, "Category already exists");
   }
 
+  const cloudinaryResult = await new Promise<UploadApiResponse>(
+    (resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            resource_type: "image",
+            folder: "fixflow/categories",
+          },
+          (error, result) => {
+            if (error) {
+              return reject(error);
+            }
+
+            if (!result) {
+              return reject(new Error("No result returned from Cloudinary"));
+            }
+
+            resolve(result);
+          },
+        )
+        .end(buffer);
+    },
+  );
+
+  console.log(cloudinaryResult.secure_url);
+
   const category = await prisma.serviceCategory.create({
     data: {
       name,
       description,
-      imageUrl: imageUrl ?? "",
+      imageUrl: cloudinaryResult.secure_url,
     },
   });
 

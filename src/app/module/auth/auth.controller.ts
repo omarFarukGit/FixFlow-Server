@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import httpStatus from "http-status";
+import config from "../../config";
 import { AppError } from "../../utils/AppError";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
@@ -46,14 +47,14 @@ const login = catchAsync(async (req: Request, res: Response) => {
   const { accessToken, refreshToken } = await authServices.login(req.body);
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
-    secure: false,
-    sameSite: "none",
+    secure: config.node_env !== "development",
+    sameSite: config.node_env === "development" ? "lax" : "none",
     maxAge: 1000 * 60 * 60 * 24, // 24 hour or 1 day
   });
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: false,
-    sameSite: "none",
+    secure: config.node_env !== "development",
+    sameSite: config.node_env === "development" ? "lax" : "none",
     maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
   });
   sendResponse(res, {
@@ -145,11 +146,23 @@ const googleCallback = catchAsync(async (req: Request, res: Response) => {
     data: safeUser,
   });
 });
+const logout = catchAsync(async (req: Request, res: Response) => {
+  res.clearCookie("refreshToken");
+  res.clearCookie("accessToken");
+
+  res.status(httpStatus.OK).json({
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "User logout successfully",
+    data: null,
+  });
+});
 
 export const authController = {
   register,
   verifyEmail,
   login,
+  logout,
   refreshToken,
   forgotPassword,
   resetPassword,

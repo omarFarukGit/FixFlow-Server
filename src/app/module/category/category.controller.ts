@@ -1,16 +1,32 @@
 import httpStatus from "http-status";
+import { AppError } from "../../utils/AppError";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { CategoryService } from "./category.services";
 
 const createCategory = catchAsync(async (req, res) => {
-  const result = await CategoryService.createCategory(req.body);
+  const { name, description } = req.body;
+
+  console.log(req.file);
+
+  if (!req.file) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Category image is required");
+  }
+  console.log(req.file.buffer);
+
+  const category = await CategoryService.createCategory(
+    {
+      name,
+      description,
+    },
+    req.file?.buffer as Buffer,
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
     message: "Category created successfully",
-    data: result,
+    data: category,
   });
 });
 

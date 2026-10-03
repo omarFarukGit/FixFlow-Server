@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { Role } from "../../../generated/prisma/enums";
+import { upload } from "../../lib/multer";
 import { auth } from "../../middleware/checkAuth";
 import { validateRequest } from "../../middleware/validateRequest";
 import { CategoryController } from "./category.controller";
@@ -9,6 +10,7 @@ const router = Router();
 
 router.post(
   "/",
+  upload.single("image"),
   auth(Role.ADMIN),
   validateRequest(categoryValidation.CreateCategoryValidationSchema),
   CategoryController.createCategory,
