@@ -4,6 +4,7 @@ import { cloudinary } from "../../lib/cloudinary";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import type { IUpdateMePayload } from "./user.interface";
+import { GetAllUsersValidationSchema } from "./user.validation";
 
 const me = async (userId: string) => {
   const user = await prisma.user.findUnique({
@@ -19,7 +20,6 @@ const me = async (userId: string) => {
     throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  // শুধু TECHNICIAN হলে profile আনবে
   if (user.role === "TECHNICIAN") {
     const technician = await prisma.user.findUnique({
       where: {
@@ -41,7 +41,7 @@ const me = async (userId: string) => {
 
 const updateMe = async (userId: string, updateData: IUpdateMePayload) => {
   const { name, phone, address, city, area } = updateData;
-  console.log({ name, phone, address, city, area });
+
   const user = await prisma.user.findUnique({
     where: {
       id: userId,
@@ -70,7 +70,7 @@ const updateMe = async (userId: string, updateData: IUpdateMePayload) => {
       password: true,
     },
   });
-  console.log(updateData);
+
   return updatedUser;
 };
 
@@ -87,6 +87,7 @@ const updateProfileImage = async (userId: string, buffer: Buffer) => {
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
+
   const cloudinaryResult = await new Promise<UploadApiResponse>(
     (resolve, reject) => {
       cloudinary.uploader
@@ -94,7 +95,6 @@ const updateProfileImage = async (userId: string, buffer: Buffer) => {
           {
             resource_type: "auto",
           },
-
           async (error, result) => {
             if (error) {
               return reject(error);
@@ -110,29 +110,140 @@ const updateProfileImage = async (userId: string, buffer: Buffer) => {
         .end(buffer);
     },
   );
+
   const updatedUser = await prisma.user.update({
     where: {
       id: userId,
     },
-
     data: {
       imageUrl: cloudinaryResult.secure_url,
       imagePublicId: cloudinaryResult.public_id,
     },
-
     omit: {
       password: true,
     },
   });
-  if (user?.imagePublicId && user.imageUrl) {
+
+  if (user.imagePublicId && user.imageUrl) {
     await cloudinary.uploader.destroy(user.imagePublicId);
   }
 
   return updatedUser;
 };
 
+const getAllUsers = async (query: unknown) => {
+  const { page, limit, search, role, status, sortBy, sortOrder } =
+    GetAllUsersValidationSchema.parse(query);
+
+  const skip = (page - 1) * limit;
+
+  const where = {
+    deletedAt: null,
+
+    ...(role && {
+      role,
+    }),
+
+    ...(status && {
+      status,
+    }),
+
+    ...(search && {
+      OR: [
+        {
+          name: {
+            contains: search,
+            mode: "insensitive" as const,
+          },
+        },
+        {
+          email: {
+            contains: search,
+            mode: "insensitive" as const,
+          },
+        },
+        {
+          phone: {
+            contains: search,
+            mode: "insensitive" as const,
+          },
+        },
+      ],
+    }),
+  };
+
+  const [data, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      skip,
+      take: limit,
+
+      orderBy: {
+        [sortBy ?? "createdAt"]: sortOrder,
+      },
+
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        status: true,
+        imageUrl: true,
+        authProvider: true,
+        emailVerified: true,
+        createdAt: true,
+        updatedAt: true,
+
+        technicianProfile: {
+          select: {
+            userId: true,
+            bio: true,
+            experienceYears: true,
+            averageRating: true,
+            totalJobs: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    }),
+
+    prisma.user.count({
+      where,
+    }),
+  ]);
+
+  return {
+    data,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+const getAllCustomers = async (query: unknown) => {
+  return getAllUsers({
+    ...(query as Record<string, unknown>),
+    role: "CUSTOMER",
+  });
+};
+
+const getAllTechnicians = async (query: unknown) => {
+  return getAllUsers({
+    ...(query as Record<string, unknown>),
+    role: "TECHNICIAN",
+  });
+};
+
 export const userService = {
   me,
   updateMe,
   updateProfileImage,
+  getAllUsers,
+  getAllCustomers,
+  getAllTechnicians,
 };

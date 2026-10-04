@@ -23,6 +23,22 @@ export const UpdateUserValidationZodSchema = z.object({
   area: z.string().max(100, "Area cannot exceed 100 characters").optional(),
 });
 
+export const GetAllUsersValidationSchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+
+  limit: z.coerce.number().int().positive().max(100).default(10),
+
+  search: z.string().optional(),
+
+  role: z.enum(["CUSTOMER", "TECHNICIAN", "ADMIN"]).optional(),
+
+  status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(),
+
+  sortBy: z.string().optional(),
+
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+});
+
 export const updateUserValidation = {
   UpdateUserValidationZodSchema,
 };

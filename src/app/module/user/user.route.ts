@@ -19,6 +19,11 @@ router.patch(
   auth(Role.ADMIN, Role.TECHNICIAN, Role.CUSTOMER),
   userController.updateMe,
 );
+router.get("/", auth(Role.ADMIN), userController.getAllUsers);
+
+router.get("/customers", auth(Role.ADMIN), userController.getAllCustomers);
+
+router.get("/technicians", auth(Role.ADMIN), userController.getAllTechnicians);
 
 router.patch(
   "/me/image",
