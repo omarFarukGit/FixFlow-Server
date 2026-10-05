@@ -17,8 +17,13 @@ router.post(
 );
 router.get(
   "/",
-  auth(Role.CUSTOMER),
+  auth(Role.CUSTOMER, Role.TECHNICIAN),
   ServiceRequestController.getMyServiceRequests,
+);
+router.get(
+  "/:id",
+  auth(Role.CUSTOMER, Role.TECHNICIAN, Role.ADMIN),
+  ServiceRequestController.getServiceRequestById,
 );
 
 router.get(

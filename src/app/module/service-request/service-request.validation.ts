@@ -142,6 +142,11 @@ const GetMyAssignedServicesValidationSchema = z.object({
 
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
+
+const GetServiceRequestByIdValidationSchema = z.object({
+  id: z.uuid("Invalid service request ID"),
+});
+
 export const ServiceRequestValidationSchema = {
   CreateServiceRequestValidationSchema,
   GetMyServiceRequestsValidationSchema,
@@ -150,4 +155,5 @@ export const ServiceRequestValidationSchema = {
   AssignTechnicianValidationSchema,
   CompleteServiceRequestValidationSchema,
   GetMyAssignedServicesValidationSchema,
+  GetServiceRequestByIdValidationSchema,
 };

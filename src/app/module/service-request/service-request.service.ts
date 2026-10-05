@@ -50,6 +50,63 @@ const createServiceRequest = async (
   return serviceRequest;
 };
 
+const getServiceRequestById = async (serviceRequestId: string) => {
+  const serviceRequest = await prisma.serviceRequest.findUnique({
+    where: {
+      id: serviceRequestId,
+      isDeleted: false,
+    },
+
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          imageUrl: true,
+        },
+      },
+
+      technician: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          imageUrl: true,
+
+          technicianProfile: {
+            select: {
+              experienceYears: true,
+              averageRating: true,
+              totalJobs: true,
+            },
+          },
+        },
+      },
+
+      category: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          imageUrl: true,
+        },
+      },
+
+      payment: true,
+      review: true,
+    },
+  });
+
+  if (!serviceRequest) {
+    throw new AppError(httpStatus.NOT_FOUND, "Service request not found");
+  }
+
+  return serviceRequest;
+};
+
 const getMyServiceRequests = async (
   customerId: string,
   query: IGetMyServiceRequestsQuery,
@@ -1037,6 +1094,7 @@ const getMyAssignedServices = async (
 
 export const ServiceRequestService = {
   createServiceRequest,
+  getServiceRequestById,
   getMyServiceRequests,
   getMyServiceRequestById,
   updateMyServiceRequest,

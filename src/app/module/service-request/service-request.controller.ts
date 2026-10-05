@@ -22,6 +22,22 @@ const createServiceRequest = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getServiceRequestById = catchAsync(async (req, res) => {
+  const { id } =
+    ServiceRequestValidationSchema.GetServiceRequestByIdValidationSchema.parse(
+      req.params,
+    );
+
+  const result = await ServiceRequestService.getServiceRequestById(id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Service request retrieved successfully",
+    data: result,
+  });
+});
+
 const getMyServiceRequests = catchAsync(async (req, res) => {
   const customerId = req.user?.userId as string;
 
@@ -210,4 +226,5 @@ export const ServiceRequestController = {
   startServiceRequest,
   completeServiceRequest,
   getMyAssignedServices,
+  getServiceRequestById,
 };
