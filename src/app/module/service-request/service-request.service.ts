@@ -138,24 +138,28 @@ const getMyServiceRequests = async (
             mode: "insensitive" as const,
           },
         },
+
         {
           description: {
             contains: search,
             mode: "insensitive" as const,
           },
         },
+
         {
           address: {
             contains: search,
             mode: "insensitive" as const,
           },
         },
+
         {
           city: {
             contains: search,
             mode: "insensitive" as const,
           },
         },
+
         {
           area: {
             contains: search,
@@ -166,6 +170,9 @@ const getMyServiceRequests = async (
     }),
   };
 
+  /**
+   * Main service request query
+   */
   const [serviceRequests, total] = await Promise.all([
     prisma.serviceRequest.findMany({
       where,
@@ -192,9 +199,6 @@ const getMyServiceRequests = async (
               select: {
                 bio: true,
                 experienceYears: true,
-                skills: true,
-                hourlyRate: true,
-                status: true,
                 averageRating: true,
                 totalJobs: true,
               },
@@ -203,6 +207,7 @@ const getMyServiceRequests = async (
         },
 
         payment: true,
+
         review: true,
       },
 
@@ -211,6 +216,7 @@ const getMyServiceRequests = async (
       },
 
       skip,
+
       take: limit,
     }),
 
@@ -218,6 +224,100 @@ const getMyServiceRequests = async (
       where,
     }),
   ]);
+
+  const [
+    totalRequests,
+    pendingRequests,
+    assignedServices,
+    acceptedServices,
+    inProgressServices,
+    completedServices,
+    cancelledServices,
+    completedServiceRequests,
+  ] = await Promise.all([
+    // Total
+    prisma.serviceRequest.count({
+      where: {
+        customerId,
+        isDeleted: false,
+      },
+    }),
+
+    // Pending
+    prisma.serviceRequest.count({
+      where: {
+        customerId,
+        isDeleted: false,
+        status: "PENDING",
+      },
+    }),
+
+    // Assigned
+    prisma.serviceRequest.count({
+      where: {
+        customerId,
+        isDeleted: false,
+        status: "ASSIGNED",
+      },
+    }),
+
+    // Accepted
+    prisma.serviceRequest.count({
+      where: {
+        customerId,
+        isDeleted: false,
+        status: "ACCEPTED",
+      },
+    }),
+
+    // In Progress
+    prisma.serviceRequest.count({
+      where: {
+        customerId,
+        isDeleted: false,
+        status: "IN_PROGRESS",
+      },
+    }),
+
+    // Completed
+    prisma.serviceRequest.count({
+      where: {
+        customerId,
+        isDeleted: false,
+        status: "COMPLETED",
+      },
+    }),
+
+    // Cancelled
+    prisma.serviceRequest.count({
+      where: {
+        customerId,
+        isDeleted: false,
+        status: "CANCELLED",
+      },
+    }),
+
+    // Completed services for total spent
+    prisma.serviceRequest.findMany({
+      where: {
+        customerId,
+        isDeleted: false,
+        status: "COMPLETED",
+      },
+
+      select: {
+        finalPrice: true,
+        estimatedPrice: true,
+      },
+    }),
+  ]);
+
+  const activeServices =
+    assignedServices + acceptedServices + inProgressServices;
+
+  const totalSpent = completedServiceRequests.reduce((total, service) => {
+    return total + Number(service.finalPrice ?? service.estimatedPrice ?? 0);
+  }, 0);
 
   const totalPages = Math.ceil(total / limit);
 
@@ -228,6 +328,27 @@ const getMyServiceRequests = async (
       total,
       totalPages,
     },
+
+    summary: {
+      totalRequests,
+
+      pendingRequests,
+
+      assignedServices,
+
+      acceptedServices,
+
+      inProgressServices,
+
+      activeServices,
+
+      completedServices,
+
+      cancelledServices,
+
+      totalSpent,
+    },
+
     data: serviceRequests,
   };
 };

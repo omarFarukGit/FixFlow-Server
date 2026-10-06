@@ -27,31 +27,6 @@ const CreateServiceRequestValidationSchema = z.object({
   categoryId: z.uuid("Invalid category ID"),
 });
 
-const GetMyServiceRequestsValidationSchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-
-  limit: z.coerce.number().int().min(1).max(100).default(10),
-
-  status: z
-    .enum([
-      "PENDING",
-      "ACCEPTED",
-      "ASSIGNED",
-      "IN_PROGRESS",
-      "COMPLETED",
-      "CANCELLED",
-    ])
-    .optional(),
-
-  search: z.string().trim().max(100).optional(),
-
-  sortBy: z
-    .enum(["createdAt", "scheduledAt", "estimatedPrice", "finalPrice"])
-    .default("createdAt"),
-
-  sortOrder: z.enum(["asc", "desc"]).default("desc"),
-});
-
 export const UpdateServiceRequestValidationSchema = z.object({
   title: z
     .string()
@@ -145,6 +120,31 @@ const GetMyAssignedServicesValidationSchema = z.object({
 
 const GetServiceRequestByIdValidationSchema = z.object({
   id: z.uuid("Invalid service request ID"),
+});
+
+const GetMyServiceRequestsValidationSchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+
+  limit: z.coerce.number().int().positive().max(100).default(10),
+
+  status: z
+    .enum([
+      "PENDING",
+      "ASSIGNED",
+      "ACCEPTED",
+      "IN_PROGRESS",
+      "COMPLETED",
+      "CANCELLED",
+    ])
+    .optional(),
+
+  search: z.string().optional(),
+
+  sortBy: z
+    .enum(["createdAt", "scheduledAt", "estimatedPrice", "finalPrice"])
+    .default("createdAt"),
+
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
 export const ServiceRequestValidationSchema = {

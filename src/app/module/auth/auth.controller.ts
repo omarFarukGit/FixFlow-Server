@@ -44,7 +44,9 @@ const verifyEmail = catchAsync(async (req: Request, res: Response) => {
 });
 
 const login = catchAsync(async (req: Request, res: Response) => {
-  const { accessToken, refreshToken } = await authServices.login(req.body);
+  const { accessToken, refreshToken, user } = await authServices.login(
+    req.body,
+  );
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: config.node_env !== "development",
@@ -64,6 +66,7 @@ const login = catchAsync(async (req: Request, res: Response) => {
     data: {
       accessToken: accessToken,
       refreshToken: refreshToken,
+      user: user,
     },
   });
 });

@@ -21,15 +21,14 @@ router.get(
   ServiceRequestController.getMyServiceRequests,
 );
 router.get(
-  "/:id",
-  auth(Role.CUSTOMER, Role.TECHNICIAN, Role.ADMIN),
-  ServiceRequestController.getServiceRequestById,
-);
-
-router.get(
   "/admin",
   auth(Role.ADMIN),
   ServiceRequestController.getAllServiceRequests,
+);
+router.get(
+  "/:id",
+  auth(Role.CUSTOMER, Role.TECHNICIAN, Role.ADMIN),
+  ServiceRequestController.getServiceRequestById,
 );
 
 router.patch(

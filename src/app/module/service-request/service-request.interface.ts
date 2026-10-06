@@ -55,3 +55,22 @@ export interface IGetMyAssignedServicesQuery {
   sortBy?: "createdAt" | "scheduledAt";
   sortOrder?: "asc" | "desc";
 }
+
+export interface IGetMyServiceRequestsQuery {
+  page?: number;
+  limit?: number;
+
+  status?:
+    | "PENDING"
+    | "ASSIGNED"
+    | "ACCEPTED"
+    | "IN_PROGRESS"
+    | "COMPLETED"
+    | "CANCELLED";
+
+  search?: string;
+
+  sortBy?: "createdAt" | "scheduledAt" | "estimatedPrice" | "finalPrice";
+
+  sortOrder?: "asc" | "desc";
+}

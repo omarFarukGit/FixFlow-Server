@@ -57,6 +57,7 @@ const getMyServiceRequests = catchAsync(async (req, res) => {
     message: "Service requests retrieved successfully",
     data: result.data,
     meta: result.meta,
+    summary: result.summary,
   });
 });
 

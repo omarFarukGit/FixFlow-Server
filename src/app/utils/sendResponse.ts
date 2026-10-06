@@ -13,6 +13,7 @@ type TResponseData<T> = {
   message: string;
   data: T;
   meta?: TMeta;
+  summary?: Record<string, any>;
 };
 
 export const sendResponse = <T>(res: Response, data: TResponseData<T>) => {
@@ -22,5 +23,6 @@ export const sendResponse = <T>(res: Response, data: TResponseData<T>) => {
     message: data.message,
     data: data.data,
     meta: data.meta,
+    summary: data.summary,
   });
 };
