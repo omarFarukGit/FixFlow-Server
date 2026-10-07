@@ -41,12 +41,10 @@ const handleStripeWebhook = catchAsync(async (req, res) => {
 });
 
 const getMyPayments = catchAsync(async (req, res) => {
-  const customerId = req.user?.userId as string;
-
-  const result = await PaymentService.getMyPayments(
-    customerId,
-    req.query as unknown as IGetMyPaymentsQuery,
-  );
+  const query = req.query as unknown as IGetMyPaymentsQuery;
+  const userId = req.user?.userId as string;
+  const role = req.user?.role as "CUSTOMER" | "TECHNICIAN";
+  const result = await PaymentService.getMyPayments(userId, role, query);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

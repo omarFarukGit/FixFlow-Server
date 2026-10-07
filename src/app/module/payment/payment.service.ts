@@ -209,7 +209,8 @@ const handleStripeWebhook = async (rawBody: Buffer, signature: string) => {
 };
 
 const getMyPayments = async (
-  customerId: string,
+  userId: string,
+  role: "CUSTOMER" | "TECHNICIAN",
   query: IGetMyPaymentsQuery,
 ) => {
   const page = Number(query.page) || 1;
@@ -219,7 +220,16 @@ const getMyPayments = async (
   const skip = (page - 1) * limit;
 
   const where = {
-    customerId,
+    ...(role === "CUSTOMER"
+      ? {
+          customerId: userId,
+        }
+      : {
+          serviceRequest: {
+            technicianId: userId,
+          },
+        }),
+
     ...(status && { status }),
   };
 
@@ -228,9 +238,11 @@ const getMyPayments = async (
       where,
       skip,
       take: limit,
+
       orderBy: {
         createdAt: "desc",
       },
+
       select: {
         id: true,
         amount: true,
@@ -249,6 +261,24 @@ const getMyPayments = async (
             title: true,
             status: true,
             finalPrice: true,
+
+            customer: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+              },
+            },
+
+            technician: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+              },
+            },
           },
         },
       },
@@ -266,6 +296,7 @@ const getMyPayments = async (
       total,
       totalPages: Math.ceil(total / limit),
     },
+
     data: payments,
   };
 };

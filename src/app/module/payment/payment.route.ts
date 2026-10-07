@@ -18,7 +18,7 @@ router.post(
 // router.post("/stripe/webhook", PaymentController.handleStripeWebhook);
 router.get(
   "/my-payments",
-  auth(Role.CUSTOMER),
+  auth(Role.CUSTOMER, Role.TECHNICIAN),
   PaymentController.getMyPayments,
 );
 

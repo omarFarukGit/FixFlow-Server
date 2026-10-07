@@ -42,7 +42,7 @@ pnpm-debug.log*
 .prisma/
 
 # Prisma generated client
-src/generated/prisma/
+# src/generated/prisma/
 
 # =========================
 # IDE / Editor
