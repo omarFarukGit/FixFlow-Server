@@ -20,6 +20,7 @@ router.get("/:id", CategoryController.getCategoryById);
 router.patch(
   "/:id",
   auth(Role.ADMIN),
+  upload.single("image"),
   validateRequest(categoryValidation.UpdateCategoryValidationSchema),
   CategoryController.updateCategory,
 );

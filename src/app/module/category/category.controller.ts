@@ -57,7 +57,15 @@ const getCategoryById = catchAsync(async (req, res) => {
 const updateCategory = catchAsync(async (req, res) => {
   const { id } = req.params;
 
-  const result = await CategoryService.updateCategory(id as string, req.body);
+  const payload = req.body;
+
+  const buffer = req.file?.buffer;
+
+  const result = await CategoryService.updateCategory(
+    id as string,
+    payload,
+    buffer,
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

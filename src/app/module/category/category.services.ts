@@ -91,7 +91,11 @@ const getCategoryById = async (id: string) => {
   return category;
 };
 
-const updateCategory = async (id: string, payload: IUpdateCategoryPayload) => {
+const updateCategory = async (
+  id: string,
+  payload: IUpdateCategoryPayload,
+  buffer?: Buffer,
+) => {
   const category = await prisma.serviceCategory.findFirst({
     where: {
       id,
@@ -103,6 +107,7 @@ const updateCategory = async (id: string, payload: IUpdateCategoryPayload) => {
     throw new AppError(httpStatus.NOT_FOUND, "Category not found");
   }
 
+  // Check duplicate category name
   if (payload.name && payload.name !== category.name) {
     const existingCategory = await prisma.serviceCategory.findUnique({
       where: {
@@ -115,11 +120,56 @@ const updateCategory = async (id: string, payload: IUpdateCategoryPayload) => {
     }
   }
 
+  let imageUrl = category.imageUrl;
+
+  // Upload new image if provided
+  if (buffer) {
+    const cloudinaryResult = await new Promise<UploadApiResponse>(
+      (resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream(
+            {
+              resource_type: "image",
+              folder: "fixflow/categories",
+            },
+            (error, result) => {
+              if (error) {
+                return reject(error);
+              }
+
+              if (!result) {
+                return reject(new Error("No result returned from Cloudinary"));
+              }
+
+              resolve(result);
+            },
+          )
+          .end(buffer);
+      },
+    );
+
+    imageUrl = cloudinaryResult.secure_url;
+
+    console.log("Updated category image:", cloudinaryResult.secure_url);
+  }
+
   const updatedCategory = await prisma.serviceCategory.update({
     where: {
       id,
     },
-    data: payload,
+    data: {
+      ...(payload.name && {
+        name: payload.name,
+      }),
+
+      ...(payload.description && {
+        description: payload.description,
+      }),
+
+      ...(buffer && {
+        imageUrl,
+      }),
+    },
   });
 
   return updatedCategory;
