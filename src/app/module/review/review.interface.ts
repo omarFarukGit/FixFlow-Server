@@ -3,3 +3,9 @@ export interface ICreateReviewPayload {
   rating: number;
   comment?: string;
 }
+
+export interface IGetReviewsQuery {
+  page?: number;
+  limit?: number;
+  rating?: number;
+}

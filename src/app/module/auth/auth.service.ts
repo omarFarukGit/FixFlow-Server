@@ -141,6 +141,18 @@ const verifyUserEmail = async (payload: IVerifyEmailPayload) => {
       password: userData.password,
       role: userData.role,
       emailVerified: true,
+
+      ...(userData.role === "TECHNICIAN" && {
+        technicianProfile: {
+          create: {
+            isApproved: false,
+          },
+        },
+      }),
+    },
+
+    include: {
+      technicianProfile: true,
     },
   });
 

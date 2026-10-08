@@ -1,7 +1,12 @@
 import httpStatus from "http-status";
+
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
-import type { ICreateReviewPayload } from "./review.interface";
+
+import type {
+  ICreateReviewPayload,
+  IGetReviewsQuery,
+} from "./review.interface";
 
 const createReview = async (
   customerId: string,
@@ -63,7 +68,6 @@ const createReview = async (
     },
   });
 
-  // Calculate technician's new average rating
   const ratingSummary = await prisma.review.aggregate({
     where: {
       technicianId: serviceRequest.technicianId,
@@ -75,7 +79,6 @@ const createReview = async (
 
   const averageRating = ratingSummary._avg.rating ?? 0;
 
-  // Update technician profile rating
   await prisma.technicianProfile.update({
     where: {
       userId: serviceRequest.technicianId,
@@ -88,6 +91,256 @@ const createReview = async (
   return review;
 };
 
+const getCustomerReviews = async (
+  customerId: string,
+  query: IGetReviewsQuery,
+) => {
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const { rating } = query;
+
+  const skip = (page - 1) * limit;
+
+  const where = {
+    reviewerId: customerId,
+    ...(rating && {
+      rating,
+    }),
+  };
+
+  const [reviews, total] = await Promise.all([
+    prisma.review.findMany({
+      where,
+      skip,
+      take: limit,
+
+      orderBy: {
+        createdAt: "desc",
+      },
+
+      select: {
+        id: true,
+        rating: true,
+        comment: true,
+        serviceRequestId: true,
+        reviewerId: true,
+        technicianId: true,
+        createdAt: true,
+        updatedAt: true,
+
+        technician: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            imageUrl: true,
+
+            technicianProfile: {
+              select: {
+                bio: true,
+                experienceYears: true,
+                averageRating: true,
+                totalJobs: true,
+              },
+            },
+          },
+        },
+
+        serviceRequest: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            finalPrice: true,
+          },
+        },
+      },
+    }),
+
+    prisma.review.count({
+      where,
+    }),
+  ]);
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+
+    data: reviews,
+  };
+};
+
+const getTechnicianReviews = async (
+  technicianId: string,
+  query: IGetReviewsQuery,
+) => {
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const { rating } = query;
+
+  const skip = (page - 1) * limit;
+
+  const where = {
+    technicianId,
+    ...(rating && {
+      rating,
+    }),
+  };
+
+  const [reviews, total] = await Promise.all([
+    prisma.review.findMany({
+      where,
+      skip,
+      take: limit,
+
+      orderBy: {
+        createdAt: "desc",
+      },
+
+      select: {
+        id: true,
+        rating: true,
+        comment: true,
+        serviceRequestId: true,
+        reviewerId: true,
+        technicianId: true,
+        createdAt: true,
+        updatedAt: true,
+
+        reviewer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            imageUrl: true,
+          },
+        },
+
+        serviceRequest: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            finalPrice: true,
+          },
+        },
+      },
+    }),
+
+    prisma.review.count({
+      where,
+    }),
+  ]);
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+
+    data: reviews,
+  };
+};
+
+const getAllReviews = async (query: IGetReviewsQuery) => {
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const { rating } = query;
+
+  const skip = (page - 1) * limit;
+
+  const where = {
+    ...(rating && {
+      rating,
+    }),
+  };
+
+  const [reviews, total] = await Promise.all([
+    prisma.review.findMany({
+      where,
+      skip,
+      take: limit,
+
+      orderBy: {
+        createdAt: "desc",
+      },
+
+      select: {
+        id: true,
+        rating: true,
+        comment: true,
+        serviceRequestId: true,
+        reviewerId: true,
+        technicianId: true,
+        createdAt: true,
+        updatedAt: true,
+
+        reviewer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            imageUrl: true,
+          },
+        },
+
+        technician: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            imageUrl: true,
+
+            technicianProfile: {
+              select: {
+                averageRating: true,
+                totalJobs: true,
+              },
+            },
+          },
+        },
+
+        serviceRequest: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            finalPrice: true,
+          },
+        },
+      },
+    }),
+
+    prisma.review.count({
+      where,
+    }),
+  ]);
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+
+    data: reviews,
+  };
+};
+
 export const ReviewService = {
   createReview,
+  getCustomerReviews,
+  getTechnicianReviews,
+  getAllReviews,
 };

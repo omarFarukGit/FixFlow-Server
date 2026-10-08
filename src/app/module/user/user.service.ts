@@ -197,11 +197,16 @@ const getAllUsers = async (query: unknown) => {
 
         technicianProfile: {
           select: {
+            id: true,
             userId: true,
             bio: true,
             experienceYears: true,
+            skills: true,
+            hourlyRate: true,
+            status: true,
             averageRating: true,
             totalJobs: true,
+            isApproved: true,
             createdAt: true,
             updatedAt: true,
           },
