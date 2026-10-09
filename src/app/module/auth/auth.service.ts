@@ -179,7 +179,7 @@ const verifyUserEmail = async (payload: IVerifyEmailPayload) => {
   const { ...user } = createdUser;
   const jwtPayload = {
     userId: user.id,
-    name: user.name,
+    // name: user.name,
     email: user.email,
     role: user.role,
   };
@@ -243,7 +243,7 @@ const login = async (payload: ILoginPayload) => {
 
   const jwtPayload = {
     userId: user.id,
-    name: user.name,
+    // name: user.name,
     email: user.email,
     role: user.role,
   };
@@ -265,7 +265,7 @@ const login = async (payload: ILoginPayload) => {
     refreshToken,
     user: {
       id: user.id,
-      name: user.name,
+      // name: user.name,
       email: user.email,
       role: user.role,
     },
@@ -302,7 +302,7 @@ const refreshToken = async (token: string) => {
 
   const jwtPayload = {
     userId: user.id,
-    name: user.name,
+    // name: user.name,
     email: user.email,
     role: user.role,
   };
