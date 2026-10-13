@@ -38,5 +38,6 @@ router.post(
 
 router.get("/google", authController.googleLogin);
 
+router.post("/google/callback", authController.googleCallback);
 router.get("/google/callback", authController.googleCallback);
 export const authRoutes = router;

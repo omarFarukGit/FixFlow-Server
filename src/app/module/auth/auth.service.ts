@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import path from "node:path";
 import bcrypt from "bcryptjs";
 import ejs from "ejs";
+import type { TokenPayload } from "google-auth-library";
 import httpStatus from "http-status";
 import type { JwtPayload, SignOptions } from "jsonwebtoken";
 import { UserStatus } from "../../../generated/prisma/enums";
@@ -474,24 +475,27 @@ const googleLogin = () => {
   return url;
 };
 
-const googleCallback = async (code: string) => {
-  // 1. Google authorization code exchange
-  const { tokens } = await googleClient.getToken(code);
-
-  if (!tokens.id_token) {
-    throw new AppError(httpStatus.UNAUTHORIZED, "Google authentication failed");
+const googleCallback = async (idToken: string) => {
+  if (!idToken) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Google ID token is required");
   }
 
-  // 2. Verify ID Token
-  const ticket = await googleClient.verifyIdToken({
-    idToken: tokens.id_token,
-    audience: process.env.GOOGLE_CLIENT_ID,
-  });
+  // 1. Verify Google ID token
+  let payload: TokenPayload | undefined;
 
-  const payload = ticket.getPayload();
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: config.google_client_id,
+    });
+
+    payload = ticket.getPayload();
+  } catch {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Invalid Google ID token");
+  }
 
   if (!payload) {
-    throw new AppError(httpStatus.UNAUTHORIZED, "Invalid Google token");
+    throw new AppError(httpStatus.UNAUTHORIZED, "Invalid Google token payload");
   }
 
   const googleId = payload.sub;
@@ -506,15 +510,19 @@ const googleCallback = async (code: string) => {
     );
   }
 
-  // 3. Find user
+  if (!payload.email_verified) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Google email is not verified");
+  }
+
+  // 2. Find existing user
   let user = await prisma.user.findFirst({
     where: {
       OR: [{ googleId }, { email }],
     },
   });
 
-  // 4. User exists
   if (user) {
+    // Google login is CUSTOMER-only
     if (user.role !== "CUSTOMER") {
       throw new AppError(
         httpStatus.FORBIDDEN,
@@ -522,8 +530,7 @@ const googleCallback = async (code: string) => {
       );
     }
 
-    // Optional: existing credential customer
-    // can link Google account here
+    // Link Google account to an existing credential user
     if (!user.googleId) {
       user = await prisma.user.update({
         where: {
@@ -533,11 +540,12 @@ const googleCallback = async (code: string) => {
           googleId,
           authProvider: "GOOGLE",
           emailVerified: true,
+          ...(picture && !user.imageUrl ? { imageUrl: picture } : {}),
         },
       });
     }
   } else {
-    // 5. Create CUSTOMER only
+    // 3. Create a new CUSTOMER
     user = await prisma.user.create({
       data: {
         name: name ?? "Google User",
@@ -551,8 +559,33 @@ const googleCallback = async (code: string) => {
     });
   }
 
-  return user;
+  // 4. Generate your application's own JWT tokens
+  const jwtPayload = {
+    userId: user.id,
+    email: user.email,
+    role: user.role,
+  };
+
+  const accessToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_access_secret,
+    config.jwt_access_expires_in as SignOptions,
+  );
+
+  const refreshToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_refresh_secret,
+    config.jwt_refresh_expires_in as SignOptions,
+  );
+
+  // 5. Return user and tokens
+  return {
+    user,
+    accessToken,
+    refreshToken,
+  };
 };
+
 export const authServices = {
   register,
   verifyUserEmail,

@@ -122,6 +122,7 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
 const googleLogin = catchAsync(async (_req: Request, res: Response) => {
   const url = authServices.googleLogin();
 
@@ -129,33 +130,62 @@ const googleLogin = catchAsync(async (_req: Request, res: Response) => {
 });
 
 const googleCallback = catchAsync(async (req: Request, res: Response) => {
-  const code = req.query.code;
+  const { idToken } = req.body as {
+    idToken?: string;
+  };
 
-  if (typeof code !== "string") {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "Google authorization code is required",
-    );
+  console.log(idToken, "id token");
+
+  if (!idToken) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Google ID token is required");
   }
 
-  const user = await authServices.googleCallback(code);
+  const result = await authServices.googleCallback(idToken);
+  console.log(result.accessToken, "acess");
 
-  const { password, imagePublicId, isDeleted, deletedAt, ...safeUser } = user;
+  res.cookie("accessToken", result.accessToken, {
+    httpOnly: true,
+    secure: config.node_env !== "development",
+    sameSite: config.node_env === "development" ? "lax" : "none",
+    maxAge: 1000 * 60 * 60 * 24, // 24 hour or 1 day
+  });
+  res.cookie("refreshToken", result.refreshToken, {
+    httpOnly: true,
+    secure: config.node_env !== "development",
+    sameSite: config.node_env === "development" ? "lax" : "none",
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+  });
 
-  res.status(httpStatus.OK).json({
-    success: true,
+  return sendResponse(res, {
     statusCode: httpStatus.OK,
+    success: true,
     message: "Google login successful",
-    data: safeUser,
+    data: {
+      user: result.user,
+    },
   });
 });
-const logout = catchAsync(async (req: Request, res: Response) => {
-  res.clearCookie("refreshToken");
-  res.clearCookie("accessToken");
 
-  res.status(httpStatus.OK).json({
-    success: true,
+const logout = catchAsync(async (req: Request, res: Response) => {
+  res.cookie("accessToken", "", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    path: "/",
+    expires: new Date(0),
+  });
+
+  res.cookie("refreshToken", "", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    path: "/",
+    expires: new Date(0),
+  });
+
+  sendResponse(res, {
     statusCode: httpStatus.OK,
+    success: true,
     message: "User logout successfully",
     data: null,
   });
