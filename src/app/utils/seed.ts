@@ -193,16 +193,22 @@ export const seedCategories = async () => {
         name: "AC Repair",
         description:
           "Air conditioner repair, maintenance, and installation services.",
+        imageUrl:
+          "https://res.cloudinary.com/daa2ses7l/image/upload/v1791883153/fixflow/categories/v4tmzisqpxn00lidc6v3.png",
       },
       {
         name: "Electrical",
         description:
           "Home electrical wiring, repair, installation, and maintenance services.",
+        imageUrl:
+          "https://res.cloudinary.com/daa2ses7l/image/upload/v1791883364/fixflow/categories/eiepkayntjjef9485ri7.png",
       },
       {
         name: "Plumbing",
         description:
           "Plumbing repair, pipe installation, leakage fixing, and maintenance services.",
+        imageUrl:
+          "https://res.cloudinary.com/daa2ses7l/image/upload/v1791883396/fixflow/categories/xcxohnrackr4ebtpxl83.png",
       },
       {
         name: "Appliance Repair",
@@ -218,26 +224,35 @@ export const seedCategories = async () => {
         name: "Washing Machine Repair",
         description:
           "Washing machine repair, installation, and maintenance services.",
+        imageUrl:
+          "https://res.cloudinary.com/daa2ses7l/image/upload/v1791883333/fixflow/categories/yove6bwwr2okaehgpstw.png",
       },
       {
         name: "TV Repair",
         description:
           "Television troubleshooting, repair, and maintenance services.",
+        imageUrl:
+          "https://res.cloudinary.com/daa2ses7l/image/upload/v1791883299/fixflow/categories/ntluqbqegccfddxmm2qe.png",
       },
       {
         name: "Computer & Laptop Repair",
         description:
           "Computer and laptop hardware, software, and troubleshooting services.",
+        imageUrl:
+          "https://res.cloudinary.com/daa2ses7l/image/upload/v1791883251/fixflow/categories/yhlpmek24z0vplfzb35q.png",
       },
       {
         name: "Painting",
         description:
           "Interior and exterior home painting and wall finishing services.",
+        imageUrl: "",
       },
       {
         name: "Carpentry",
         description:
           "Furniture repair, woodwork, installation, and carpentry services.",
+        imageUrl:
+          "https://res.cloudinary.com/daa2ses7l/image/upload/v1791883190/fixflow/categories/surcbtwxqx1j273v0w4j.png",
       },
     ];
 

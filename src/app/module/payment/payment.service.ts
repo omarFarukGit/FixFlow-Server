@@ -90,10 +90,9 @@ const createCheckoutSession = async (
       customerId,
     },
 
-    success_url:
-      "http://localhost:3000/payment/success?session_id={CHECKOUT_SESSION_ID}",
+    success_url: `${config.frontend_url}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
 
-    cancel_url: "http://localhost:3000/payment/cancel",
+    cancel_url: `${config.frontend_url}/payment/cancel`,
   });
 
   // 7. Create payment record
